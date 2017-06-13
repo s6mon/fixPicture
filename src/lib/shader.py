@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 #Michael ORTEGA - 07/April/2017
-
+import sys
 try:
     from OpenGL.GL      import *
     from OpenGL.GL      import shaders
