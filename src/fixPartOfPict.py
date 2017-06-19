@@ -3,39 +3,60 @@ from OpenGL.GLUT import *
 from OpenGL.GLU import *
 from OpenGL.GL import *
 
+
 import sys
 import numpy
 import math
+import time
 
 import lib.shader as sh
 import lib.viewpoint as vp
+import lib.matrix as matrix
+import lib.parser as parser
 
 picture_vbos, pointing_vbos = None, None
 window_w , window_h = 800,600
 pi_shader, po_shader = None, None
-vertic_picture = None
+vertic_picture = []
 
 mouse = numpy.array([0, 0, None, None, 0, 0])
-
 tech_feedback = numpy.array([])
 
 
-def display():
-    """Display in real time the pointer of our pad or by eye tracking"""
-def init_projection():
-    """Intialise the camera and call shaders program"""
-def projection():
-    """build matrix (vec4) of projection"""
+def stoApplication():
+    """Function calling when application must be close"""
+def init_env():
+    """initialise window param"""
 def init():
     """initialise vertices of picture, declare and build the shaders
        -return : ID of program shaders"""
-def init_env():
-    """initialise window param"""
+def projection():
+    """build matrix (vec4) of projection"""
+def init_projections():
+    """Intialise the camera and call shaders program"""
+def mouse_passive(x, y):
+    """get the coord of mouse pointer when there are not other entry"""
+def keyboard(key, x, y):
+    """get the touch which are pressed"""
+def cursor_feedback(p):
+    """get the mouse pointer to print it
+    -return numpy.append(arr, z, axis=1)"""
+def display():
+    """Display in real time the pointer of our pad or by eye tracking"""
+def idle():
+    """function called when there are no other event"""
 
 
-#fonction pour parser fichier d'entrée
-#def parse():
+#########################################
+#           END OF DECLARATION          #
+#########################################
 
+
+
+def stopApplication():
+    print("====> END")
+    sys.exit(0)
+    
 def init_env():
     global window_h, window_w
 
@@ -44,30 +65,23 @@ def init_env():
 
     glutInitDisplayString('double rgba samples=8 depth core')
     glutInitWindowSize(window_w, window_h)
+    glutInitWindowPosition (1500, 0)
     glutCreateWindow('myFirstWindow')
     glClearColor(1.0, 1.0, 1.0, 1.0)
     glutSetCursor(GLUT_CURSOR_NONE)
 
     print('Environment booted')
 
+    global changeVue
+    changeVue = False
+
 def init():
     global picture_vbos, pointing_vbos
-
     global vertic_picture
     pointer_sh_attr = [5]
 
-    #parser le fichier image d entree
-    #TODO fonction pour parser fichier d'entrée
-    vertic_picture = numpy.array([
-        0.0, 1.0, 0.0,
-        1.0, 0.0, 0.0,
-        -1.0, 0.0, 0.0,
-
-        0.0, -1.0, 0.0,
-        -1.0, 0.0, 0.0,
-        1.0, 0.0, 0.0
-        ], dtype='float32')
-
+    #parse fichier d'entree
+    vertic_picture = parser.parse("monTriangle.obj")
     #creation des shaders
     try:
         vao = glGenVertexArrays(1)
@@ -117,28 +131,41 @@ def init():
     return picture_sh, pointer_sh
 
 
-def projection(shader, matp, matm):
+def projection(shader, matp, matm, matv):
     unif_p = glGetUniformLocation(shader, 'projection_mat')
     unif_m = glGetUniformLocation(shader, 'modelview_mat')
+    unif_v = glGetUniformLocation(shader, 'view_mat')
+    
 
     glUniformMatrix4fv(unif_p, 1, False, matp.T)
     glUniformMatrix4fv(unif_m, 1, False, matm.T)
+    glUniformMatrix4fv(unif_v, 1, False, matv)
+    
 
 def init_projections(pi_shader, po_shader):
 
     m_persp_projection  = vp.perspective(45.0, window_w/window_h, 0.01, 10000.)
     m_persp_modelview  = numpy.identity(4)
-    m_persp_modelview[2][3] = -7.5
+    m_persp_modelview[2][3] = -7.5 #on modifie la position de l'observateur sur l'axe des Z
 
     m_ortho_projection = numpy.identity(4)
     m_ortho_projection = vp.orthographic(0, window_w, 0, window_h, -1.0, 1.0)
     m_ortho_modelview = numpy.identity(4)
 
+    radius = 10
+    camX = numpy.cos(time.time()) * radius
+    camZ = numpy.sin(time.time()) * radius
+    
+    view = matrix.m_lookAt([camX,  0.0, camZ],
+                           [0.0,  0.0, 0.0],
+                           [0.0,  1.0, 0.0])    
+
+
     glUseProgram(pi_shader)
-    projection(pi_shader, m_persp_projection, m_persp_modelview)
+    projection(pi_shader, m_persp_projection, m_persp_modelview, view)
 
     glUseProgram(po_shader)
-    projection(po_shader, m_ortho_projection, m_ortho_modelview)
+    projection(po_shader, m_ortho_projection, m_ortho_modelview, view)
 
 def mouse_passive(x, y):
     global mouse
@@ -146,6 +173,11 @@ def mouse_passive(x, y):
     mouse[0] = x
     mouse[1] = glutGet(GLUT_WINDOW_HEIGHT) - y
     glutPostRedisplay()
+
+def keyboard(key, x, y):
+
+    if key == b'x':
+        stopApplication()
 
 def cursor_feedback(p):
     left    = numpy.array([1,0])
@@ -163,9 +195,13 @@ def cursor_feedback(p):
     z = numpy.zeros((len(arr),1), dtype='float32')
     return numpy.append(arr, z, axis=1)
 
+def idle():
+    init_projections(pi_shader, po_shader)
+    glutPostRedisplay()
+
 
 def main():
-    print()
+    print('====> START')
     global pi_shader, po_shader
 
     glutInit(sys.argv)
@@ -177,6 +213,8 @@ def main():
 
     glutDisplayFunc(display)
     glutPassiveMotionFunc(mouse_passive)
+    glutKeyboardFunc(keyboard)
+    glutIdleFunc(idle)
     glutMainLoop()
     return
 
@@ -204,6 +242,7 @@ def display():
     glDrawArrays(GL_TRIANGLES, 0, len(tech_feedback))
     
     glutSwapBuffers()
+
     return
 
 if __name__ == '__main__': main()
