@@ -36,21 +36,30 @@ def parse(fileName):
 	            normaleTab.append(match.group(4))
 
 	        if match.group(1) == 'f':
-	        	i = 6 #on initialise à 6 car on va aller récupérer le 8ème match de parse
-	        	nbVert = 0
-	        	s = 1
-	        	while s != None:
-	        		if nbVert > 2:
-	        			nbVert = 0
-	        			i = i - 2
-	        		else:
-	        			i += 2
+	        	if match.group(8) != None: #il y a plus de 3 sommets
+	        		i = 6 #on initialise à 6 car on va aller récupérer le 8ème match de parse
+	        		nbVert = 0
+	        		s = 1
+	        		while s != None:
+	        			if nbVert > 2:
+	        				nbVert = 0
+	        				i = i - 2
+	        			else:
+	        				i += 2
+	        				s = int(match.group(i)) - 1
+	        				fullVertArray(verticesTab[s][0], verticesTab[s][1], verticesTab[s][2])
+	        				s = match.group(i+2)
+	        				nbVert += 1
+	        		s0 = int(match.group(8)) - 1 #on relie le dernier sommet de la forme
+	        		fullVertArray(verticesTab[s0][0], verticesTab[s0][1], verticesTab[s0][2])
+	        	else : #il y a 3 sommets
+	        		i = 17
+	        		while i <= 21:
 	        			s = int(match.group(i)) - 1
-		        		fullVertArray(verticesTab[s][0], verticesTab[s][1], verticesTab[s][2])
-		        		s = match.group(i+2)
-		        		nbVert += 1
-		        s0 = int(match.group(8)) - 1 #on ferme la forme 
-		        fullVertArray(verticesTab[s0][0], verticesTab[s0][1], verticesTab[s0][2])
+	        			fullVertArray(verticesTab[s][0], verticesTab[s][1], verticesTab[s][2])
+	        			i += 2
+	        			
+
 
 
 

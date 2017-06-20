@@ -18,6 +18,7 @@ picture_vbos, pointing_vbos = None, None
 window_w , window_h = 800,600
 pi_shader, po_shader = None, None
 vertic_picture = []
+nameFile = None
 
 mouse = numpy.array([0, 0, None, None, 0, 0])
 tech_feedback = numpy.array([])
@@ -81,7 +82,8 @@ def init():
     pointer_sh_attr = [5]
 
     #parse fichier d'entree
-    vertic_picture = parser.parse("monTriangle.obj")
+    print(nameFile)
+    vertic_picture = parser.parse(nameFile)
     #creation des shaders
     try:
         vao = glGenVertexArrays(1)
@@ -202,13 +204,20 @@ def idle():
 
 def main():
     print('====> START')
-    global pi_shader, po_shader
+    global pi_shader, po_shader, nameFile
 
     glutInit(sys.argv)
+    if len(sys.argv) < 2:
+        print("Nombre d'argument incorrect")
+        stopApplication()
+    else:
+        print(sys.argv[1])
+        nameFile = sys.argv[1]
+
     init_env()
 
     pi_shader, po_shader = init()
-    print('Starting of display')
+
     init_projections(pi_shader, po_shader)
 
     glutDisplayFunc(display)
@@ -230,9 +239,9 @@ def display():
     glUseProgram(pi_shader)
     glBindBuffer(GL_ARRAY_BUFFER, picture_vbos)
     glBufferData(GL_ARRAY_BUFFER, vertic_picture, GL_DYNAMIC_DRAW)
+    # print(vertic_picture)
+    # print(len(vertic_picture))
     glDrawArrays(GL_TRIANGLES, 0, len(vertic_picture))
-
-
 
     #display pointer at screen
     tech_feedback = cursor_feedback(mouse[:2]) 
