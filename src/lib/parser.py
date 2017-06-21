@@ -10,18 +10,16 @@ verticesTab = []
 normaleTab = []
 
 xMin, xMax, yMin, yMax, zMin, zMax = None, None, None, None, None, None
-xCentre, yCentre, zCentre = 0, 0, 0
 
 
 def parse(fileName):
 	"""function to parse"""
 def fullVertArray (s1, s2, s3):
 	"""is not variable"""
-#TODO fonction qui trouve Xmin Xmax, Ymin Ymax et Zmin Zmax et qui renvoie Xcentre Ycentre et Zcentre
-#def centre(x, y, z):
-
-#TODO fonction qui re-centre tous les points en fonction du centre calculer
-#def reCentre():
+def centre(x, y, z):
+	"""calcule xMax xMin yMax yMin zMax zMin"""
+def reCentre():
+	"""change le tableau ou sont stocké les sommets à afficher => translate les sommets sur x y et z"""
 
 
 #########################################
@@ -93,7 +91,6 @@ def fullVertArray(s1, s2, s3):
 
 def centre(x, y, z):
 	global xMin, xMax, yMin, yMax, zMin, zMax
-	global xCentre, yCentre, zCentre
 
 	#find xMin and xMax
 	if (xMin == None and xMax == None):
@@ -125,10 +122,6 @@ def centre(x, y, z):
 		else:
 			zMax = z
 
-	xCentre = float(xMax) - float(xMin)
-	yCentre = float(yMax) - float(yMin)
-	zCentre = float(zMax) - float(zMin)
-
 def reCentre():
 	global  vertic_picture
 
@@ -137,7 +130,7 @@ def reCentre():
 	xTrans = (float(xMax) + float(xMin)) / 2
 	yTrans = (float(yMax) + float(yMin)) / 2
 	zTrans = (float(zMax) + float(zMin)) / 2
-	
+
 	i = 0
 	while i < arraySize:
 		vertic_picture[i]   = vertic_picture[i]   - xTrans

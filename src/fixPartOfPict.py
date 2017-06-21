@@ -79,7 +79,6 @@ def init():
 
     #parse fichier d'entree
     vertic_picture = parser.parse(nameFile)
-    #vertic_picture = numpy.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]], dtype='float32')
     #creation des shaders 
     try:
         vao = glGenVertexArrays(1)
