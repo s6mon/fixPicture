@@ -1,16 +1,27 @@
+
 import re
 import numpy
+
+from . import overall
 
 vertic_picture = []
 
 verticesTab = []
 normaleTab = []
 
+xMin, xMax, yMin, yMax, zMin, zMax = None, None, None, None, None, None
+xCentre, yCentre, zCentre = 0, 0, 0
+
 
 def parse(fileName):
 	"""function to parse"""
 def fullVertArray (s1, s2, s3):
 	"""is not variable"""
+#TODO fonction qui trouve Xmin Xmax, Ymin Ymax et Zmin Zmax et qui renvoie Xcentre Ycentre et Zcentre
+#def centre(x, y, z):
+
+#TODO fonction qui re-centre tous les points en fonction du centre calculer
+#def reCentre():
 
 
 #########################################
@@ -19,10 +30,15 @@ def fullVertArray (s1, s2, s3):
 
 
 def parse(fileName):
+	nbBoucle = 0
 	global vertic_picture, verticesTab, normaleTab
-	print("Opening file to parse")
+	print("Opening file to parse (", fileName,")")
 	path = "../ressources/"+fileName
-	fileIn = open(path, 'r')
+	try:
+		fileIn = open(path, 'r')
+	except IOError as e:
+		print("I/O error({0}): {1}".format(e.errno, e.strerror))
+		overall.stopApplication()
 	print("Start of parsing")
 	for ligne in fileIn:
 
@@ -31,6 +47,7 @@ def parse(fileName):
 	    if match != None: 
 	        if match.group(1) == 'v':
 	            verticesTab.append([match.group(4), match.group(5), match.group(6)])
+	            centre(match.group(4), match.group(5), match.group(6))
 
 	        if match.group(1) == 'vn':
 	            normaleTab.append(match.group(4))
@@ -53,20 +70,19 @@ def parse(fileName):
 	        		s0 = int(match.group(8)) - 1 #on relie le dernier sommet de la forme
 	        		fullVertArray(verticesTab[s0][0], verticesTab[s0][1], verticesTab[s0][2])
 	        	else : #il y a 3 sommets
+	        		nbBoucle += 1
 	        		i = 17
 	        		while i <= 21:
 	        			s = int(match.group(i)) - 1
 	        			fullVertArray(verticesTab[s][0], verticesTab[s][1], verticesTab[s][2])
 	        			i += 2
-	        			
-
-
-
 
 	vertic_picture = numpy.array(vertic_picture, dtype='float32')
+	reCentre()
 	fileIn.close()
 	print("File closed")
 
+	#TODO return normaleTab
 	return vertic_picture
 
 def fullVertArray(s1, s2, s3):
@@ -75,6 +91,61 @@ def fullVertArray(s1, s2, s3):
 	vertic_picture.append(s2)
 	vertic_picture.append(s3)
 
+def centre(x, y, z):
+	global xMin, xMax, yMin, yMax, zMin, zMax
+	global xCentre, yCentre, zCentre
+
+	#find xMin and xMax
+	if (xMin == None and xMax == None):
+		xMin = x
+		xMax = x
+	elif (x > xMax or x < xMin):
+		if x < xMin:
+			xMin = x
+		else:
+			xMax = x
+
+	#find yMin and yMax
+	if (yMin == None and yMax == None):
+		yMin = y
+		yMax = y
+	elif (y > yMax or y < yMin):
+		if y < yMin:
+			yMin = y
+		else:
+			yMax = y
+
+	#find zMin and zMax
+	if (zMin == None and zMax == None):
+		zMin = z
+		zMax = z
+	elif (z > zMax or z < zMin):
+		if z < zMin:
+			zMin = z
+		else:
+			zMax = z
+
+	xCentre = float(xMax) - float(xMin)
+	yCentre = float(yMax) - float(yMin)
+	zCentre = float(zMax) - float(zMin)
+
+def reCentre():
+	global  vertic_picture
+
+	arraySize = int(len(vertic_picture) / 3)
+
+	xTrans = (float(xMax) + float(xMin)) / 2
+	yTrans = (float(yMax) + float(yMin)) / 2
+	zTrans = (float(zMax) + float(zMin)) / 2
+	
+	i = 0
+	while i < arraySize:
+		vertic_picture[i]   = vertic_picture[i]   - xTrans
+		vertic_picture[i+1] = vertic_picture[i+1] - yTrans
+		vertic_picture[i+2] = vertic_picture[i+2] - zTrans
+		i += 3
+
+	
 
 
 

@@ -13,6 +13,8 @@ import lib.shader as sh
 import lib.viewpoint as vp
 import lib.matrix as matrix
 import lib.parser as parser
+import lib.overall as overall
+
 
 picture_vbos, pointing_vbos = None, None
 window_w , window_h = 800,600
@@ -24,8 +26,7 @@ mouse = numpy.array([0, 0, None, None, 0, 0])
 tech_feedback = numpy.array([])
 
 
-def stoApplication():
-    """Function calling when application must be close"""
+
 def init_env():
     """initialise window param"""
 def init():
@@ -52,21 +53,16 @@ def idle():
 #           END OF DECLARATION          #
 #########################################
 
-
-
-def stopApplication():
-    print("====> END")
-    sys.exit(0)
     
 def init_env():
     global window_h, window_w
 
-    window_h = 800
+    window_h = 1080
     window_w = 800
 
     glutInitDisplayString('double rgba samples=8 depth core')
     glutInitWindowSize(window_w, window_h)
-    glutInitWindowPosition (1500, 0)
+    glutInitWindowPosition (1120, 0)
     glutCreateWindow('myFirstWindow')
     glClearColor(1.0, 1.0, 1.0, 1.0)
     glutSetCursor(GLUT_CURSOR_NONE)
@@ -82,9 +78,9 @@ def init():
     pointer_sh_attr = [5]
 
     #parse fichier d'entree
-    print(nameFile)
     vertic_picture = parser.parse(nameFile)
-    #creation des shaders
+    #vertic_picture = numpy.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]], dtype='float32')
+    #creation des shaders 
     try:
         vao = glGenVertexArrays(1)
         glBindVertexArray(vao)
@@ -102,7 +98,7 @@ def init():
     ###picture shader###
     tech_model = numpy.array([])
     glBindBuffer(GL_ARRAY_BUFFER, picture_vbos)
-    glBufferData(GL_ARRAY_BUFFER, vertic_picture, GL_DYNAMIC_DRAW)
+    glBufferData(GL_ARRAY_BUFFER, vertic_picture, GL_STATIC_DRAW)
     glVertexAttribPointer(picture_vbos, 3, GL_FLOAT, GL_FALSE, 0, None)
     glEnableVertexAttribArray(picture_vbos)
     picture_sh = sh.create('../shader/picture_vert.glsl',
@@ -179,7 +175,7 @@ def mouse_passive(x, y):
 def keyboard(key, x, y):
 
     if key == b'x':
-        stopApplication()
+        overall.stopApplication()
 
 def cursor_feedback(p):
     left    = numpy.array([1,0])
@@ -208,12 +204,11 @@ def main():
 
     glutInit(sys.argv)
     if len(sys.argv) < 2:
-        print("Nombre d'argument incorrect")
-        stopApplication()
+       print("Nombre d'argument incorrect")
+       overall.stopApplication()
     else:
-        print(sys.argv[1])
-        nameFile = sys.argv[1]
-
+       nameFile = sys.argv[1]
+    #nameFile = "exemple19.obj"
     init_env()
 
     pi_shader, po_shader = init()
@@ -232,24 +227,26 @@ def display():
 
     global tech_feedback
     global window_w, window_h
+    global vertic_picture
 
     init_projections(pi_shader, po_shader)
     
     #display picture at screen
     glUseProgram(pi_shader)
     glBindBuffer(GL_ARRAY_BUFFER, picture_vbos)
-    glBufferData(GL_ARRAY_BUFFER, vertic_picture, GL_DYNAMIC_DRAW)
-    # print(vertic_picture)
-    # print(len(vertic_picture))
-    glDrawArrays(GL_TRIANGLES, 0, len(vertic_picture))
+    glBufferData(GL_ARRAY_BUFFER, vertic_picture, GL_STATIC_DRAW)
+    glDrawArrays(GL_TRIANGLES, 0, int(len(vertic_picture)/3))
+
+    #TODO add normale array 
 
     #display pointer at screen
-    tech_feedback = cursor_feedback(mouse[:2]) 
+    tech_feedback = cursor_feedback(mouse[:2])
+    
     glUseProgram(po_shader)
     glBindBuffer(GL_ARRAY_BUFFER, pointing_vbos[0])
     glBufferData(GL_ARRAY_BUFFER, tech_feedback.astype('float32'), GL_DYNAMIC_DRAW)
     glDrawArrays(GL_TRIANGLES, 0, len(tech_feedback))
-    
+
     glutSwapBuffers()
 
     return
