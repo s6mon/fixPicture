@@ -15,8 +15,9 @@ def perspective(fov, aspect, near, far):
     mat[2][2] = (near + far)/(near - far)
     mat[2][3] = 2*near*far/(near-far)
     mat[3][2] = -1
+    mat[3][3] = 1
     
-    return mat
+    return mat  
 
 
 def viewport(sx, sy, w, h, near, far):
@@ -45,3 +46,14 @@ def orthographic(left, right, bottom, top, near, far):
     mat[2][3] = -(far+near)/(far-near)
     
     return mat
+
+
+def normalize (xToNorm):
+    xNormed = xToNorm / xToNorm.max(axis=0)
+    return xNormed
+
+def myLookAt(eye, center, up):
+    tmpF = center - eye
+    f = normalize(tmpF)
+    s = normalize(numpy.cross(f, up))
+    

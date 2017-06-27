@@ -64,6 +64,7 @@ def m_mult(a, b):
 			M[i*4 + j] = a[i*4]*b[j] + a[i*4+1]*b[j+4] + a[i*4+2]*b[j+8] + a[i*4+3]*b[j+12]
 			j += 1
 		i += 1
+		j = 0
 
 	return M
 

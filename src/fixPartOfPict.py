@@ -17,10 +17,16 @@ import lib.overall as overall
 
 
 picture_vbos, pointing_vbos = None, None
-window_w , window_h = 800,600
+window_w , window_h = 800,800
 pi_shader, po_shader = None, None
 vertic_picture = []
+norm_picture = []
+
 nameFile = None
+
+m_persp_projection = []
+
+refT = 0 
 
 mouse = numpy.array([0, 0, None, None, 0, 0])
 tech_feedback = numpy.array([])
@@ -55,31 +61,39 @@ def idle():
 
     
 def init_env():
-    global window_h, window_w
+    global window_h, window_w, refT
 
     window_h = 1080
     window_w = 800
 
+    refT = time.time()
+
     glutInitDisplayString('double rgba samples=8 depth core')
     glutInitWindowSize(window_w, window_h)
     glutInitWindowPosition (1120, 0)
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH)
     glutCreateWindow('myFirstWindow')
     glClearColor(1.0, 1.0, 1.0, 1.0)
+    glEnable(GL_DEPTH_TEST)
+    glEnable(GL_CULL_FACE)
+    glFrontFace(GL_CW)
+    glDepthFunc(GL_LESS)
     glutSetCursor(GLUT_CURSOR_NONE)
 
     print('Environment booted')
 
-    global changeVue
-    changeVue = False
-
 def init():
     global picture_vbos, pointing_vbos
-    global vertic_picture
+    global vertic_picture, norm_picture
+    global m_persp_projection
+
     pointer_sh_attr = [5]
+    m_persp_projection  = vp.perspective(45.0, window_w/window_h, 0.1, 1000.)
 
     #parse fichier d'entree
-    vertic_picture = parser.parse(nameFile)
+    vertic_picture, norm_picture = parser.parse(nameFile)
     #creation des shaders 
+
     try:
         vao = glGenVertexArrays(1)
         glBindVertexArray(vao)
@@ -91,23 +105,32 @@ def init():
         print()
         sys.exit()
 
-    picture_vbos = glGenBuffers(1)
+    picture_vbos = glGenBuffers(2)
     pointing_vbos = [glGenBuffers(1)]
 
     ###picture shader###
-    tech_model = numpy.array([])
-    glBindBuffer(GL_ARRAY_BUFFER, picture_vbos)
+    glBindBuffer(GL_ARRAY_BUFFER, picture_vbos[0])
     glBufferData(GL_ARRAY_BUFFER, vertic_picture, GL_STATIC_DRAW)
-    glVertexAttribPointer(picture_vbos, 3, GL_FLOAT, GL_FALSE, 0, None)
-    glEnableVertexAttribArray(picture_vbos)
+    glVertexAttribPointer(picture_vbos[0], 3, GL_FLOAT, GL_FALSE, 0, None)
+    glEnableVertexAttribArray(picture_vbos[0])
+
+    #passage du tableau des normales
+    glBindBuffer(GL_ARRAY_BUFFER, picture_vbos[1])
+    glBufferData(GL_ARRAY_BUFFER, norm_picture, GL_DYNAMIC_DRAW)
+    glVertexAttribPointer(picture_vbos[1], 3, GL_FLOAT, GL_FALSE, 0, None)
+    glEnableVertexAttribArray(picture_vbos[1])
+
+
     picture_sh = sh.create('../shader/picture_vert.glsl',
                             None,
                             '../shader/picture_frag.glsl',
-                            [picture_vbos],
-                            ['position'])
+                            [picture_vbos[0], picture_vbos[1]],
+                            ['position', 'normale'])
     if not picture_sh:
         exit(1)
     print('Picture shader created')
+
+    
 
     ###pointer shader###
     tech_model = numpy.array([])
@@ -128,41 +151,44 @@ def init():
     return picture_sh, pointer_sh
 
 
-def projection(shader, matp, matm, matv):
+def projection(shader, matp, matm):
     unif_p = glGetUniformLocation(shader, 'projection_mat')
     unif_m = glGetUniformLocation(shader, 'modelview_mat')
-    unif_v = glGetUniformLocation(shader, 'view_mat')
     
-
     glUniformMatrix4fv(unif_p, 1, False, matp.T)
     glUniformMatrix4fv(unif_m, 1, False, matm.T)
-    glUniformMatrix4fv(unif_v, 1, False, matv)
     
 
 def init_projections(pi_shader, po_shader):
 
-    m_persp_projection  = vp.perspective(45.0, window_w/window_h, 0.01, 10000.)
-    m_persp_modelview  = numpy.identity(4)
-    m_persp_modelview[2][3] = -7.5 #on modifie la position de l'observateur sur l'axe des Z
+    global newT
 
     m_ortho_projection = numpy.identity(4)
     m_ortho_projection = vp.orthographic(0, window_w, 0, window_h, -1.0, 1.0)
     m_ortho_modelview = numpy.identity(4)
 
-    radius = 10
-    camX = numpy.cos(time.time()) * radius
-    camZ = numpy.sin(time.time()) * radius
+    t = time.time()
+    pi = math.pi
+    teta0 = 0
+    teta1 = 10
     
-    view = matrix.m_lookAt([camX,  0.0, camZ],
-                           [0.0,  0.0, 0.0],
-                           [0.0,  1.0, 0.0])    
+    # camX = (teta0 + (teta1-teta0)/2 + ((teta1-teta0)/2) * math.cos(t))
+    # camZ = (teta1 + (teta1-teta0)/2 + ((teta1-teta0)/2) * math.sin(t))
+    
+    camX = math.cos(t) * 10
+    camZ = math.sin(t) * 10
 
+    print(camX, camZ)
+
+    m_persp_modelview = numpy.array(matrix.m_lookAt([camX,  0.0, camZ],
+                                                    [0.0,  0.0, 0.0],
+                                                    [0.0,  1.0, 0.0]))   
 
     glUseProgram(pi_shader)
-    projection(pi_shader, m_persp_projection, m_persp_modelview, view)
-
+    projection(pi_shader, m_persp_projection, m_persp_modelview)
+    
     glUseProgram(po_shader)
-    projection(po_shader, m_ortho_projection, m_ortho_modelview, view)
+    projection(po_shader, m_ortho_projection, m_ortho_modelview)
 
 def mouse_passive(x, y):
     global mouse
@@ -173,7 +199,7 @@ def mouse_passive(x, y):
 
 def keyboard(key, x, y):
 
-    if key == b'x':
+    if key == b'x' or key == b'X':
         overall.stopApplication()
 
 def cursor_feedback(p):
@@ -207,7 +233,6 @@ def main():
        overall.stopApplication()
     else:
        nameFile = sys.argv[1]
-    #nameFile = "exemple19.obj"
     init_env()
 
     pi_shader, po_shader = init()
@@ -226,17 +251,19 @@ def display():
 
     global tech_feedback
     global window_w, window_h
-    global vertic_picture
+    global vertic_picture, norm_picture
 
     init_projections(pi_shader, po_shader)
     
     #display picture at screen
     glUseProgram(pi_shader)
-    glBindBuffer(GL_ARRAY_BUFFER, picture_vbos)
+    glBindBuffer(GL_ARRAY_BUFFER, picture_vbos[0])
     glBufferData(GL_ARRAY_BUFFER, vertic_picture, GL_STATIC_DRAW)
     glDrawArrays(GL_TRIANGLES, 0, int(len(vertic_picture)/3))
 
-    #TODO add normale array 
+    glUseProgram(pi_shader)
+    glBindBuffer(GL_ARRAY_BUFFER, picture_vbos[1])
+    glBufferData(GL_ARRAY_BUFFER, norm_picture, GL_DYNAMIC_DRAW)
 
     #display pointer at screen
     tech_feedback = cursor_feedback(mouse[:2])
