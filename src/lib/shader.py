@@ -12,9 +12,9 @@ def compile(path, type):
     try:
         shader = open(path, 'r').read()
     except:
-        print('\n\n\t!!!!!!!!!!!!!!!!!!!!!!!!!')
-        print('\t!!! Cannot read', path, '!!!')
-        print('\t!!!!!!!!!!!!!!!!!!!!!!!!!\n')
+        print('\n!!!!!!!!!!!!!!!!!!!!!!!!!')
+        print('!!! Cannot read', path, '!!!')
+        print('!!!!!!!!!!!!!!!!!!!!!!!!!\n')
         return None
     
     vs = glCreateShader(type)
@@ -23,9 +23,9 @@ def compile(path, type):
     glCompileShader(vs)
     log = glGetShaderInfoLog(vs)
     if log: 
-        print('\n\n\t!!!!!!!!!!!!!!!!!!!!!!!!!')
-        print('\t!!!Shader', path,': ', log)
-        print('\t!!!!!!!!!!!!!!!!!!!!!!!!!\n')
+        print('\n!!!!!!!!!!!!!!!!!!!!!!!!!')
+        print('!!!Shader', path,': ', log)
+        print('!!!!!!!!!!!!!!!!!!!!!!!!!\n')
         return None
     
     return vs

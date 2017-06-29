@@ -17,7 +17,7 @@ import lib.overall as overall
 
 
 picture_vbos, pointing_vbos = None, None
-window_w , window_h = 800,800
+window_w , window_h = 0,0
 pi_shader, po_shader = None, None
 vertic_picture = []
 norm_picture = []
@@ -26,10 +26,19 @@ nameFile = None
 
 m_persp_projection = []
 
-refT = 0 
+t0 = 0
+sensTrigo = True 
 
 mouse = numpy.array([0, 0, None, None, 0, 0])
 tech_feedback = numpy.array([])
+
+#MVP var
+FoV = 0.0
+Ratio = 0.0
+Near = 0.0
+Far = 0.0
+eye = [0., 0., 0.]
+
 
 
 
@@ -59,14 +68,25 @@ def idle():
 #           END OF DECLARATION          #
 #########################################
 
-    
+def init_persp():
+    global FoV, Ratio, Near, Far, eye
+    #projection
+    FoV = 45.0
+    Ratio = window_w/window_h
+    Near = 0.1
+    Far = 100.
+
+    #camera
+    eye[0] = 0.
+    eye[1] = 0.
+    eye[2] = 3.
+
+
 def init_env():
-    global window_h, window_w, refT
+    global window_h, window_w, t0
 
     window_h = 1080
     window_w = 800
-
-    refT = time.time()
 
     glutInitDisplayString('double rgba samples=8 depth core')
     glutInitWindowSize(window_w, window_h)
@@ -87,13 +107,14 @@ def init():
     global vertic_picture, norm_picture
     global m_persp_projection
 
-    pointer_sh_attr = [5]
-    m_persp_projection  = vp.perspective(45.0, window_w/window_h, 0.1, 1000.)
+    init_persp()
 
+    pointer_sh_attr = [5]
+    
     #parse fichier d'entree
     vertic_picture, norm_picture = parser.parse(nameFile)
-    #creation des shaders 
-
+    #creation des shaders
+    
     try:
         vao = glGenVertexArrays(1)
         glBindVertexArray(vao)
@@ -110,7 +131,7 @@ def init():
 
     ###picture shader###
     glBindBuffer(GL_ARRAY_BUFFER, picture_vbos[0])
-    glBufferData(GL_ARRAY_BUFFER, vertic_picture, GL_STATIC_DRAW)
+    glBufferData(GL_ARRAY_BUFFER, vertic_picture, GL_DYNAMIC_DRAW)
     glVertexAttribPointer(picture_vbos[0], 3, GL_FLOAT, GL_FALSE, 0, None)
     glEnableVertexAttribArray(picture_vbos[0])
 
@@ -151,44 +172,39 @@ def init():
     return picture_sh, pointer_sh
 
 
-def projection(shader, matp, matm):
+def projection(shader, matp, matm, mato):
     unif_p = glGetUniformLocation(shader, 'projection_mat')
     unif_m = glGetUniformLocation(shader, 'modelview_mat')
+    unif_o = glGetUniformLocation(shader, 'object_mat')
     
     glUniformMatrix4fv(unif_p, 1, False, matp.T)
-    glUniformMatrix4fv(unif_m, 1, False, matm.T)
+    glUniformMatrix4fv(unif_m, 1, False, matm)
+    glUniformMatrix4fv(unif_o, 1, False, mato)
     
 
 def init_projections(pi_shader, po_shader):
 
-    global newT
+    global t0
+    global sensTrigo
+    global m_persp_projection
 
     m_ortho_projection = numpy.identity(4)
     m_ortho_projection = vp.orthographic(0, window_w, 0, window_h, -1.0, 1.0)
     m_ortho_modelview = numpy.identity(4)
 
-    t = time.time()
-    pi = math.pi
-    teta0 = 0
-    teta1 = 10
-    
-    # camX = (teta0 + (teta1-teta0)/2 + ((teta1-teta0)/2) * math.cos(t))
-    # camZ = (teta1 + (teta1-teta0)/2 + ((teta1-teta0)/2) * math.sin(t))
-    
-    camX = math.cos(t) * 10
-    camZ = math.sin(t) * 10
+    m_persp_projection  = vp.perspective(FoV, Ratio, Near, Far)
 
-    print(camX, camZ)
-
-    m_persp_modelview = numpy.array(matrix.m_lookAt([camX,  0.0, camZ],
+    m_persp_modelview = numpy.array(matrix.m_lookAt([eye[0], eye[1], eye[2]],
                                                     [0.0,  0.0, 0.0],
-                                                    [0.0,  1.0, 0.0]))   
+                                                    [0.0,  1.0, 0.0]))
+
+    m_persp_object = matrix.objectMatrix([0., 1., 0.], math.pi/10)
 
     glUseProgram(pi_shader)
-    projection(pi_shader, m_persp_projection, m_persp_modelview)
+    projection(pi_shader, m_persp_projection, m_persp_modelview, m_persp_object)
     
     glUseProgram(po_shader)
-    projection(po_shader, m_ortho_projection, m_ortho_modelview)
+    projection(po_shader, m_ortho_projection, m_ortho_modelview, None)
 
 def mouse_passive(x, y):
     global mouse
@@ -258,7 +274,7 @@ def display():
     #display picture at screen
     glUseProgram(pi_shader)
     glBindBuffer(GL_ARRAY_BUFFER, picture_vbos[0])
-    glBufferData(GL_ARRAY_BUFFER, vertic_picture, GL_STATIC_DRAW)
+    glBufferData(GL_ARRAY_BUFFER, vertic_picture, GL_DYNAMIC_DRAW)
     glDrawArrays(GL_TRIANGLES, 0, int(len(vertic_picture)/3))
 
     glUseProgram(pi_shader)

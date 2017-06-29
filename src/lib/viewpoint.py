@@ -48,12 +48,3 @@ def orthographic(left, right, bottom, top, near, far):
     return mat
 
 
-def normalize (xToNorm):
-    xNormed = xToNorm / xToNorm.max(axis=0)
-    return xNormed
-
-def myLookAt(eye, center, up):
-    tmpF = center - eye
-    f = normalize(tmpF)
-    s = normalize(numpy.cross(f, up))
-    

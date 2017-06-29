@@ -120,19 +120,19 @@ def reCentre():
 	zTrans = (float(max(zList)) + float(min(zList))) / 2
 
 	if yTrans > xTrans:
-		scale = 1
+		scale = yTrans
 	else:
 		scale = xTrans
 	i = 0
 	while i < arraySize:
 		vertic_picture[i] = vertic_picture[i] - xTrans #/ xTrans*2 #TODO changer la div pour tout voir ou jouer sur "m_persp_modelview[2][3] = -5" pour changer l'éloignement de la camera 
-		vertic_picture[i] = vertic_picture[i] / scale
+		#vertic_picture[i] = vertic_picture[i] / scale
 
 		vertic_picture[i+1] = vertic_picture[i+1] - yTrans #/ yTrans*2
-		vertic_picture[i+1] = vertic_picture[i+1] / scale
+		#vertic_picture[i+1] = vertic_picture[i+1] / scale
 
 		vertic_picture[i+2] = vertic_picture[i+2] - zTrans #/ zTrans*2
-		vertic_picture[i+2] = vertic_picture[i+2] / scale
+		#vertic_picture[i+2] = vertic_picture[i+2] / scale
 		i += 3
 
 
