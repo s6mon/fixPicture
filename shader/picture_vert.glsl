@@ -7,7 +7,11 @@ uniform mat4 object_mat;
 
 out float color_factor;
 
-const vec3 light = vec3(0, 0, 5);
+const vec3 light = vec3(5, 0, 5);
+const mat4 translate = mat4(vec4(1.0, 0.0, 0.0, 0.),
+					   		vec4(0.0, 1.0, 0.0, 0.),
+					    	vec4(0.0, 0.0, 1.0, 0.),
+					    	vec4(0.0, 0.0, -0.5, 1.));
 vec3 l;
 in vec3 position;
 in vec3 normale;

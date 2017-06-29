@@ -24,8 +24,6 @@ norm_picture = []
 
 nameFile = None
 
-m_persp_projection = []
-
 t0 = 0
 sensTrigo = True 
 
@@ -38,6 +36,8 @@ Ratio = 0.0
 Near = 0.0
 Far = 0.0
 eye = [0., 0., 0.]
+
+angleRot, angle, sens, angle1, angle2 = 0.0, 0.0, 1.0, 0.0, 0.0
 
 
 
@@ -69,7 +69,7 @@ def idle():
 #########################################
 
 def init_persp():
-    global FoV, Ratio, Near, Far, eye
+    global FoV, Ratio, Near, Far, eye, angleRot, angle1, angle2
     #projection
     FoV = 45.0
     Ratio = window_w/window_h
@@ -79,7 +79,12 @@ def init_persp():
     #camera
     eye[0] = 0.
     eye[1] = 0.
-    eye[2] = 3.
+    eye[2] = 1.
+
+    #rotation & translation
+    angleRot = 0.
+    angle1 = math.pi/6
+    angle2 = -math.pi/6
 
 
 def init_env():
@@ -95,7 +100,7 @@ def init_env():
     glutCreateWindow('myFirstWindow')
     glClearColor(1.0, 1.0, 1.0, 1.0)
     glEnable(GL_DEPTH_TEST)
-    glEnable(GL_CULL_FACE)
+    #glEnable(GL_CULL_FACE)
     glFrontFace(GL_CW)
     glDepthFunc(GL_LESS)
     glutSetCursor(GLUT_CURSOR_NONE)
@@ -105,7 +110,6 @@ def init_env():
 def init():
     global picture_vbos, pointing_vbos
     global vertic_picture, norm_picture
-    global m_persp_projection
 
     init_persp()
 
@@ -114,7 +118,7 @@ def init():
     #parse fichier d'entree
     vertic_picture, norm_picture = parser.parse(nameFile)
     #creation des shaders
-    
+
     try:
         vao = glGenVertexArrays(1)
         glBindVertexArray(vao)
@@ -141,7 +145,6 @@ def init():
     glVertexAttribPointer(picture_vbos[1], 3, GL_FLOAT, GL_FALSE, 0, None)
     glEnableVertexAttribArray(picture_vbos[1])
 
-
     picture_sh = sh.create('../shader/picture_vert.glsl',
                             None,
                             '../shader/picture_frag.glsl',
@@ -151,14 +154,13 @@ def init():
         exit(1)
     print('Picture shader created')
 
-    
-
     ###pointer shader###
     tech_model = numpy.array([])
     glBindBuffer(GL_ARRAY_BUFFER, pointing_vbos[0])
     glBufferData(GL_ARRAY_BUFFER, tech_model.astype('float32'), GL_DYNAMIC_DRAW)
     glVertexAttribPointer(pointer_sh_attr[0], 3, GL_FLOAT, GL_FALSE, 0, None)
     glEnableVertexAttribArray(pointer_sh_attr[0])
+
     pointer_sh = sh.create('../shader/pointer_vert.glsl',
                             None,
                             '../shader/pointer_frag.glsl',
@@ -183,10 +185,7 @@ def projection(shader, matp, matm, mato):
     
 
 def init_projections(pi_shader, po_shader):
-
-    global t0
-    global sensTrigo
-    global m_persp_projection
+    global angleRot, angle, sens
 
     m_ortho_projection = numpy.identity(4)
     m_ortho_projection = vp.orthographic(0, window_w, 0, window_h, -1.0, 1.0)
@@ -198,7 +197,25 @@ def init_projections(pi_shader, po_shader):
                                                     [0.0,  0.0, 0.0],
                                                     [0.0,  1.0, 0.0]))
 
-    m_persp_object = matrix.objectMatrix([0., 1., 0.], math.pi/10)
+    
+    rotation = matrix.m_rotation_object([0., 1., 0.], angleRot)
+    translation = matrix.m_translate_object(0., 0., 0.5)
+
+    m_persp_object = matrix.m_mult(translation, rotation)
+
+
+    if angleRot >= angle1:
+        sens = -1
+    elif angleRot <= angle2:
+        sens = 1
+
+    if sens == 1:
+        angleRot += math.pi/1000
+    elif sens == -1:
+        angleRot -= math.pi/1000
+
+    
+
 
     glUseProgram(pi_shader)
     projection(pi_shader, m_persp_projection, m_persp_modelview, m_persp_object)

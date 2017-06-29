@@ -21,11 +21,13 @@ def v_cross(u, v):
 	"""crossing matrix"""
 def m_lookAt(eye, center, up):
 	"""lookAt function"""
-def objectMatrix(vecteur, angle):
+def m_rotation_object(vecteur, angle):
 	"""prend en param le vecteur qui indique sur quel vecteur on pivote
 	et de quel angle on pivote"""
 def multAny(a, b):
 	""""""
+def m_translate_object(x, y, z):
+	"""Translate object retourne une matrice 4x4 de translation"""
 
 #########################################
 #			END OF DECLARATION			#
@@ -100,7 +102,7 @@ def m_lookAt(eye, center, up):
 	        -eye[0],-eye[1],-eye[2], 1 ]
 	return m_mult(T, R)
 
-def objectMatrix(vecteur, angle):
+def m_rotation_object(vecteur, angle):
 	v = v_normalize(vecteur)
 	s = math.sin(angle)
 	c = math.cos(angle)
@@ -121,7 +123,7 @@ def objectMatrix(vecteur, angle):
 					   Czx - sy,       Cyz + sx,      v[2] * Cz + c, 0.0,
 					   0.0,            0.0,           0.0,           1.0])
 
-	return T.T
+	return T
 
 def multAny (a, b):
 	#mat(nxn) * mat(1xn)
@@ -147,6 +149,13 @@ def multAny (a, b):
 		i += 1 
 	return M
 
+def m_translate_object(x, y, z):
+	M = numpy.identity(4)
+	M[3][0] = -x
+	M[3][1] = -y
+	M[3][2] = -z
+	M = M.reshape(16)
+	return M
 
 
 
