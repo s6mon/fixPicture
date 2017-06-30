@@ -24,9 +24,6 @@ norm_picture = []
 
 nameFile = None
 
-t0 = 0
-sensTrigo = True 
-
 mouse = numpy.array([0, 0, None, None, 0, 0])
 tech_feedback = numpy.array([])
 
@@ -80,9 +77,9 @@ def init_env():
     glutCreateWindow('myFirstWindow')
     glClearColor(1.0, 1.0, 1.0, 1.0)
     glEnable(GL_DEPTH_TEST)
+    #glDepthRange(0.0, 1.0)
     #glEnable(GL_CULL_FACE)
-    glFrontFace(GL_CW)
-    glDepthFunc(GL_LESS)
+    #glFrontFace(GL_CW)
     glutSetCursor(GLUT_CURSOR_NONE)
     
     print('Environment booted')
@@ -101,8 +98,8 @@ def init():
     
     #parse fichier d'entree
     vertic_picture, norm_picture = parser.parse(nameFile)
-    #creation des shaders
     
+    #creation des shaders
     try:
         vao = glGenVertexArrays(1)
         glBindVertexArray(vao)
@@ -167,7 +164,6 @@ def projection(shader, matp, matm, mato):
     unif_o = glGetUniformLocation(shader, 'object_mat')
     glUniformMatrix4fv(unif_o, 1, False, mato)
 
-
 def new_object_position():
     global angleRot, angle, sens
     rotation = matrix.m_rotation_object([0., 1., 0.], angleRot)
@@ -192,20 +188,19 @@ def new_object_position():
 
 def init_projections(pi_shader, po_shader):
     
-    camera.ortho_projection = numpy.identity(4)
     camera.ortho_projection = vp.orthographic(0, window_w, 0, window_h, -1.0, 1.0)
     camera.ortho_modelview = numpy.identity(4)
     
-    camera.persp_projection  = vp.perspective(camera.fov, camera.ratio, camera.near, camera.far)
-    
+    camera.persp_projection  = vp.perspective(camera.fov, camera.ratio, camera.near, camera.far)    
     camera.persp_modelview = numpy.array(matrix.m_lookAt(camera.position,
-                                                    camera.looking,
-                                                    camera.up))
+                                                        camera.looking,
+                                                        camera.up))
     
     new_object_position()
     
     glUseProgram(po_shader)
     projection(po_shader, camera.ortho_projection.T, camera.ortho_modelview, None)
+
 
 def mouse_passive(x, y):
     global mouse
@@ -268,7 +263,6 @@ def display():
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
     
     global tech_feedback
-    
     new_object_position()
     
     #display object at screen
@@ -280,7 +274,7 @@ def display():
     glBufferData(GL_ARRAY_BUFFER, norm_picture, GL_DYNAMIC_DRAW)
     
     glDrawArrays(GL_TRIANGLES, 0, int(len(vertic_picture)/3))
-
+    
     #display pointer at screen
     tech_feedback = cursor_feedback(mouse[:2])
     
