@@ -6,6 +6,7 @@ from OpenGL.GL import *
 
 import sys
 import numpy
+from numpy.linalg import inv
 import math
 import time
 
@@ -29,7 +30,7 @@ tech_feedback = numpy.array([])
 
 #MVP var
 class Camera:
-    def __init__(self, fov = 45, ratio = 4/3, near = 0.1, far = 100, position = [0,0,1], looking = [0,0,0], up = [0,1,0]):
+    def __init__(self, fov = 45, ratio = 4/3, near = 0.1, far = 1000, position = [0,0,5], looking = [0,0,0], up = [0,1,0]):
         self.fov = fov
         self.ratio = ratio
         self.near = near
@@ -164,31 +165,29 @@ def projection(shader, matp, matm, mato):
 def new_object_position():
     global angleRot, angle, sens
     rotation = matrix.m_rotation_object([0., 1., 0.], angleRot)
-    translation = matrix.m_translate_object(0., 0., .5)
-
+    translation = matrix.m_translate_object(0., 0., 0.5)
+    
     m_persp_object = matrix.m_mult(translation, rotation)
-
-
+    
     if angleRot >= angle1:
         sens = -1
     elif angleRot <= angle2:
         sens = 1
-
+    
     if sens == 1:
         angleRot += math.pi/1000
     elif sens == -1:
         angleRot -= math.pi/1000
     
     glUseProgram(pi_shader)
-    projection(pi_shader, camera.persp_projection.T, camera.persp_modelview, m_persp_object)
-
+    projection(pi_shader, camera.persp_projection, camera.persp_modelview, m_persp_object)
 
 def init_projections(pi_shader, po_shader):
     
-    camera.ortho_projection = vp.orthographic(0, window_w, 0, window_h, -1.0, 1.0)
+    camera.ortho_projection = vp.orthographic(0, window_w, 0, window_h, -1.0, 1.0).T
     camera.ortho_modelview = numpy.identity(4)
     
-    camera.persp_projection  = vp.perspective(camera.fov, camera.ratio, camera.near, camera.far)    
+    camera.persp_projection  = vp.perspective(camera.fov, camera.ratio, camera.near, camera.far).T
     camera.persp_modelview = numpy.array(matrix.m_lookAt(camera.position,
                                                         camera.looking,
                                                         camera.up))
@@ -196,8 +195,25 @@ def init_projections(pi_shader, po_shader):
     new_object_position()
     
     glUseProgram(po_shader)
-    projection(po_shader, camera.ortho_projection.T, camera.ortho_modelview, None)
+    projection(po_shader, camera.ortho_projection, camera.ortho_modelview, None)
 
+def mouse_intersection(mouse_x, mouse_y, camera, win_w, win_h):
+    '''Computation of the intersection between the mouse ray and the scene
+    We assume the viewport bottom left corner is 0, 0'''
+    
+    z = glReadPixels( mouse_x, mouse_y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT)[0][0];
+    if z > 0.999:
+        return [str("inf"), str("inf"), str("inf")]
+    
+    viewport    = [0, 0, win_w, win_h];
+    
+    i = inv(numpy.matmul(camera.persp_projection.T, camera.persp_modelview.reshape((4,4)).T))
+    
+    winZ = glReadPixels( mouse_x, mouse_y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT);
+    
+    vector = numpy.array([2*(mouse_x - viewport[0])/viewport[2] - 1, 2*(mouse_y - viewport[1])/viewport[3] - 1, 2*winZ-1, 1])
+    p = numpy.matmul(i,vector)
+    return p[0:3]/p[3]
 
 def mouse_passive(x, y):
     global mouse
@@ -232,11 +248,10 @@ def cursor_feedback(p):
 def idle():
     glutPostRedisplay()
 
-
 def main():
     print('====> START')
     global pi_shader, po_shader, nameFile
-
+    
     glutInit(sys.argv)
     if len(sys.argv) < 2:
        print("Nombre d'argument incorrect")
@@ -244,11 +259,11 @@ def main():
     else:
        nameFile = sys.argv[1]
     init_env()
-
+    
     pi_shader, po_shader = init()
-
+    
     init_projections(pi_shader, po_shader)
-
+    
     glutDisplayFunc(display)
     glutPassiveMotionFunc(mouse_passive)
     glutKeyboardFunc(keyboard)
@@ -271,6 +286,9 @@ def display():
     glBufferData(GL_ARRAY_BUFFER, norm_picture, GL_DYNAMIC_DRAW)
     
     glDrawArrays(GL_TRIANGLES, 0, int(len(vertic_picture)/3))
+    
+    #Intersection between the mouse ray and the scene
+    pdp = mouse_intersection(mouse[0], mouse[1], camera, window_w, window_h)
     
     #display pointer at screen
     tech_feedback = cursor_feedback(mouse[:2])
