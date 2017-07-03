@@ -149,7 +149,10 @@ def multAny (a, b):
 		i += 1 
 	return M
 
-def m_translate_object(x, y, z):
+def m_translate_object(point):
+	x = point[0]
+	y = point[1]
+	z = point[2]
 	M = numpy.identity(4)
 	M[3][0] = -x
 	M[3][1] = -y
@@ -157,6 +160,17 @@ def m_translate_object(x, y, z):
 	M = M.reshape(16)
 	return M
 
+
+def pivot(axis, angleRot, pointPivot):
+    pointPivotI = [0., 0., 0.]
+    pointPivotI[0] = -pointPivot[0]
+    pointPivotI[1] = -pointPivot[1]
+    pointPivotI[2] = -pointPivot[2]
+    translation = m_translate_object(pointPivotI)
+    rotation = m_rotation_object(axis, angleRot)
+    transform = m_mult(translation, rotation)
+    translationI = m_translate_object(pointPivot)
+    return m_mult(transform, translationI)
 
 
 

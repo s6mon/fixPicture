@@ -40,7 +40,7 @@ class Camera:
         self.up = up
 
 camera = Camera(ratio = window_w/window_h)
-angleRot, angle, sens, angle1, angle2 = 0.0, 0.0, 1.0, 0.0, 0.0
+angleRot, sens, angle1, angle2 = 0.0, 1.0, 0.0, 0.0
 
 
 def init_env():
@@ -93,9 +93,7 @@ def init():
     pointer_sh_attr = [5]
     
     #parse fichier d'entree
-    vertic_picture, norm_picture, scale = parser.parse(nameFile)
-
-    init_persp()
+    vertic_picture, norm_picture = parser.parse(nameFile)
 
     #creation des shaders
     try:
@@ -164,10 +162,11 @@ def projection(shader, matp, matm, mato):
 
 def new_object_position():
     global angleRot, angle, sens
-    rotation = matrix.m_rotation_object([0., 1., 0.], angleRot)
-    translation = matrix.m_translate_object(0., 0., 0.5)
     
-    m_persp_object = matrix.m_mult(translation, rotation)
+    axe = [0., 1., 0.]
+    angleRot += math.pi/100
+    pointPivot = [0.0, 0.0, -1.0]
+    m_persp_object = matrix.pivot(axe, angleRot, pointPivot)
     
     if angleRot >= angle1:
         sens = -1
@@ -196,6 +195,7 @@ def init_projections(pi_shader, po_shader):
     
     glUseProgram(po_shader)
     projection(po_shader, camera.ortho_projection, camera.ortho_modelview, None)
+
 
 def mouse_intersection(mouse_x, mouse_y, camera, win_w, win_h):
     '''Computation of the intersection between the mouse ray and the scene
