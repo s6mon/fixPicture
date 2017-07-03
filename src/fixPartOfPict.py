@@ -22,6 +22,7 @@ window_w , window_h = 800, 1080
 pi_shader, po_shader = None, None
 vertic_picture = []
 norm_picture = []
+pdp = [0., 0., 0.]
 
 nameFile = None
 
@@ -30,7 +31,7 @@ tech_feedback = numpy.array([])
 
 #MVP var
 class Camera:
-    def __init__(self, fov = 45, ratio = 4/3, near = 0.1, far = 1000, position = [0,0,5], looking = [0,0,0], up = [0,1,0]):
+    def __init__(self, fov = 45, ratio = 4/3, near = 0.1, far = 1000, position = [0,0,1], looking = [0,0,0], up = [0,1,0]):
         self.fov = fov
         self.ratio = ratio
         self.near = near
@@ -39,8 +40,8 @@ class Camera:
         self.looking = looking
         self.up = up
 
-camera = Camera(ratio = window_w/window_h)
-angleRot, sens, angle1, angle2 = 0.0, 1.0, 0.0, 0.0
+camera = Camera(ratio = window_w/window_h, position = [0,0,3])
+angleRot, sens, angle1, angle2 = 0.0, 1.0, math.pi/6, -math.pi/6
 
 
 def init_env():
@@ -52,6 +53,9 @@ def projection():
     """build matrix (vec4) of projection"""
 def init_projections():
     """Intialise the camera and call shaders program"""
+def mouse_intersection(mouse_x, mouse_y, camera, win_w, win_h):
+    '''Computation of the intersection between the mouse ray and the scene
+    We assume the viewport bottom left corner is 0, 0'''
 def mouse_passive(x, y):
     """get the coord of mouse pointer when there are not other entry"""
 def keyboard(key, x, y):
@@ -80,9 +84,9 @@ def init_env():
     glClearColor(1.0, 1.0, 1.0, 1.0)
     glEnable(GL_DEPTH_TEST)
     glEnable(GL_CULL_FACE)
-    glFrontFace(GL_CW)
-    glDepthFunc(GL_LESS)
-    glutSetCursor(GLUT_CURSOR_NONE)
+    #glFrontFace(GL_CW)
+    #glDepthFunc(GL_LESS)
+    #glutSetCursor(GLUT_CURSOR_NONE)
     
     print('Environment booted')
 
@@ -162,11 +166,8 @@ def projection(shader, matp, matm, mato):
 
 def new_object_position():
     global angleRot, angle, sens
-    
     axe = [0., 1., 0.]
-    angleRot += math.pi/100
-    pointPivot = [0.0, 0.0, -1.0]
-    m_persp_object = matrix.pivot(axe, angleRot, pointPivot)
+    m_persp_object = matrix.pivot(axe, angleRot, pdp)
     
     if angleRot >= angle1:
         sens = -1
@@ -200,7 +201,7 @@ def init_projections(pi_shader, po_shader):
 def mouse_intersection(mouse_x, mouse_y, camera, win_w, win_h):
     '''Computation of the intersection between the mouse ray and the scene
     We assume the viewport bottom left corner is 0, 0'''
-    
+
     z = glReadPixels( mouse_x, mouse_y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT)[0][0];
     if z > 0.999:
         return [str("inf"), str("inf"), str("inf")]
@@ -274,7 +275,7 @@ def main():
 def display():
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
     
-    global tech_feedback
+    global tech_feedback, pdp
     new_object_position()
     
     #display object at screen
@@ -288,8 +289,12 @@ def display():
     glDrawArrays(GL_TRIANGLES, 0, int(len(vertic_picture)/3))
     
     #Intersection between the mouse ray and the scene
-    pdp = mouse_intersection(mouse[0], mouse[1], camera, window_w, window_h)
-    
+    if  mouse[0] >= 0 and mouse[0] <= window_w and \
+        mouse[1] >= 0 and mouse[1] <= window_h:
+        pdpbis = mouse_intersection(mouse[0], mouse[1], camera, window_w, window_h)
+        if pdpbis[0]  != "inf":
+            pdp = pdpbis
+
     #display pointer at screen
     tech_feedback = cursor_feedback(mouse[:2])
     
