@@ -92,9 +92,7 @@ def init():
     pointer_sh_attr = [5]
     
     #parse fichier d'entree
-    vertic_picture, norm_picture, scale = parser.parse(nameFile)
-
-    init_persp()
+    vertic_picture, norm_picture = parser.parse(nameFile)
 
     #creation des shaders
     try:
