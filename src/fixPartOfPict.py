@@ -79,12 +79,12 @@ def init_persp():
     #camera
     eye[0] = 0.
     eye[1] = 0.
-    eye[2] = 1.
-
+    eye[2] = 3.
+ 
     #rotation & translation
     angleRot = 0.
-    angle1 = math.pi/6
-    angle2 = -math.pi/6
+    angle1 = math.pi/2
+    angle2 = -math.pi/2
 
 
 def init_env():
@@ -95,12 +95,12 @@ def init_env():
 
     glutInitDisplayString('double rgba samples=8 depth core')
     glutInitWindowSize(window_w, window_h)
-    glutInitWindowPosition (1120, 0)
+    glutInitWindowPosition (1110, 0)
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH)
     glutCreateWindow('myFirstWindow')
     glClearColor(1.0, 1.0, 1.0, 1.0)
     glEnable(GL_DEPTH_TEST)
-    #glEnable(GL_CULL_FACE)
+    glEnable(GL_CULL_FACE)
     glFrontFace(GL_CW)
     glDepthFunc(GL_LESS)
     glutSetCursor(GLUT_CURSOR_NONE)
@@ -111,14 +111,14 @@ def init():
     global picture_vbos, pointing_vbos
     global vertic_picture, norm_picture
 
-    init_persp()
-
     pointer_sh_attr = [5]
     
     #parse fichier d'entree
-    vertic_picture, norm_picture = parser.parse(nameFile)
-    #creation des shaders
+    vertic_picture, norm_picture, scale = parser.parse(nameFile)
 
+    init_persp()
+
+    #creation des shaders
     try:
         vao = glGenVertexArrays(1)
         glBindVertexArray(vao)
@@ -199,7 +199,7 @@ def init_projections(pi_shader, po_shader):
 
     
     rotation = matrix.m_rotation_object([0., 1., 0.], angleRot)
-    translation = matrix.m_translate_object(0., 0., 0.5)
+    translation = matrix.m_translate_object(0., 0., .5)
 
     m_persp_object = matrix.m_mult(translation, rotation)
 
