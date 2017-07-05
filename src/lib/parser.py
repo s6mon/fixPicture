@@ -12,6 +12,9 @@ verticesXTab = []
 verticesYTab = []
 verticesZTab = []
 
+tmpVert = []
+tmpNorm = []
+
 xList = []
 yList = []
 zList = []
@@ -19,12 +22,19 @@ zList = []
 normaleTab = []
 
 
-def parse(fileName):
+def parse(fileName, reverse):
 	"""function to parse"""
 def fullVertArray (s1, s2, s3):
 	"""is not variable"""
 def reCentre():
 	"""change le tableau ou sont stocké les sommets à afficher => translate les sommets sur x y et z"""
+def reverseTab():
+	"""si le param reverse de la fonction parse est à 1, reverseTab change l'ordre d'affichege des sommets
+	0 pour garder l'ordre inchangé"""
+def loadFile(fileName, reverse):
+	"""charge les tableaux si ils existent"""
+def saveFile(fileName, reverse):
+	"""sauvegarde les tableaux"""
 
 
 #########################################
@@ -32,68 +42,78 @@ def reCentre():
 #########################################
 
 
-def parse(fileName):
+def parse(fileName, reverse):
 	global vertic_picture, norm_picture, verticesTab, normaleTab
-	print("Opening file to parse (", fileName,")")
-	path = "../ressources/"+fileName
-	try:
-		fileIn = open(path, 'r')
-	except IOError as e:
-		print("I/O error({0}): {1}".format(e.errno, e.strerror))
-		overall.stopApplication()
-	print("Start of parsing")
-	for ligne in fileIn:
+	print("Opening file to parse (", fileName+".obj",")")
 
-	    match = re.search(r"(^[a-zA-Z]+) (((-?\d+.\d+) (-?\d+.\d+) (-?\d+.\d+))|((\d+)/\d*/(\d+) (\d+)/\d*/(\d+) (\d+)/\d*/(\d+) (\d+)/\d*/(\d+))|((\d+)/\d*/(\d+) (\d+)/\d*/(\d+) (\d+)/\d*/(\d+)))", ligne)
+	if(not loadFile(fileName, reverse)):
 
-	    if match != None: 
-	        if match.group(1) == 'v':
-	            verticesXTab.append(match.group(4))
-	            verticesYTab.append(match.group(5))
-	            verticesZTab.append(match.group(6))
+		path = "../ressources/"+fileName+".obj"
+		try:
+			fileIn = open(path, 'r')
+		except IOError as e:
+			print("I/O error({0}): {1}".format(e.errno, e.strerror))
+			overall.stopApplication()
+		print("Start of parsing")
+		for ligne in fileIn:
 
-	        if match.group(1) == 'vn':
-	            normaleTab.append([match.group(4), match.group(5), match.group(6)])
+		    match = re.search(r"(^[a-zA-Z]+) (((-?\d+.\d+) (-?\d+.\d+) (-?\d+.\d+))|((\d+)/\d*/(\d+) (\d+)/\d*/(\d+) (\d+)/\d*/(\d+) (\d+)/\d*/(\d+))|((\d+)/\d*/(\d+) (\d+)/\d*/(\d+) (\d+)/\d*/(\d+)))", ligne)
 
-	        if match.group(1) == 'f':
-	        	if match.group(8) != None: #il y a plus de 3 sommets
-	        		i = 6 #on initialise à 6 car on va aller récupérer le 8ème match de parse
-	        		nbVert = 0
-	        		s = 1
-	        		while s != None:
-	        			if nbVert > 2:
-	        				nbVert = 0
-	        				i = i - 2
-	        			else:
-	        				i += 2
+		    if match != None: 
+		        if match.group(1) == 'v':
+		            verticesXTab.append(match.group(4))
+		            verticesYTab.append(match.group(5))
+		            verticesZTab.append(match.group(6))
 
-	        				s = int(match.group(i)) - 1
-	        				fullVertArray(verticesXTab[s], verticesYTab[s], verticesZTab[s], vertic_picture)
-	        				n = int(match.group(i+1)) - 1
-	        				fullVertArray(normaleTab[n][0], normaleTab[n][1], normaleTab[n][2], norm_picture)
+		        if match.group(1) == 'vn':
+		            normaleTab.append([match.group(4), match.group(5), match.group(6)])
 
-	        				s = match.group(i+2)
-	        				nbVert += 1
-	        		s0 = int(match.group(8)) - 1 #on relie le dernier sommet de la forme
-	        		fullVertArray(verticesXTab[s0], verticesYTab[s0], verticesZTab[s0], vertic_picture)
-	        		n0 = int(match.group(9)) - 1
-	        		fullVertArray(normaleTab[n0][0], normaleTab[n0][1], normaleTab[n0][2], norm_picture)
-	        	else : #il y a 3 sommets
-	        		i = 17
-	        		while i <= 21:
-	        			s = int(match.group(i)) - 1
+		        if match.group(1) == 'f':
+		        	if match.group(8) != None: #il y a plus de 3 sommets
+		        		i = 6 #on initialise à 6 car on va aller récupérer le 8ème match de parse
+		        		nbVert = 0
+		        		s = 1
+		        		while s != None:
+		        			if nbVert > 2:
+		        				nbVert = 0
+		        				i = i - 2
+		        			else:
+		        				i += 2
 
-	        			fullVertArray(verticesXTab[s], verticesYTab[s], verticesZTab[s], vertic_picture)
-	        			n = int(match.group(i+1)) - 1
-	        			fullVertArray(normaleTab[n][0], normaleTab[n][1], normaleTab[n][2], norm_picture)
+		        				s = int(match.group(i)) - 1
+		        				fullVertArray(verticesXTab[s], verticesYTab[s], verticesZTab[s], vertic_picture)
+		        				n = int(match.group(i+1)) - 1
+		        				fullVertArray(normaleTab[n][0], normaleTab[n][1], normaleTab[n][2], norm_picture)
 
-	        			i += 2
+		        				s = match.group(i+2)
+		        				nbVert += 1
+		        		s0 = int(match.group(8)) - 1 #on relie le dernier sommet de la forme
+		        		fullVertArray(verticesXTab[s0], verticesYTab[s0], verticesZTab[s0], vertic_picture)
+		        		n0 = int(match.group(9)) - 1
+		        		fullVertArray(normaleTab[n0][0], normaleTab[n0][1], normaleTab[n0][2], norm_picture)
+		        	else : #il y a 3 sommets
+		        		i = 17
+		        		while i <= 21:
+		        			s = int(match.group(i)) - 1
 
-	vertic_picture = numpy.array(vertic_picture, dtype='float32')
-	norm_picture = numpy.array(norm_picture, dtype='float32')
-	reCentre()
-	fileIn.close()
-	print("File closed")
+		        			fullVertArray(verticesXTab[s], verticesYTab[s], verticesZTab[s], vertic_picture)
+		        			n = int(match.group(i+1)) - 1
+		        			fullVertArray(normaleTab[n][0], normaleTab[n][1], normaleTab[n][2], norm_picture)
+
+		        			i += 2
+
+
+		if reverse == 1:
+			print("Reverse vertices")
+			vertic_picture, norm_picture = reverseTab()
+
+		vertic_picture = numpy.array(vertic_picture, dtype='float32')
+		norm_picture = numpy.array(norm_picture, dtype='float32')
+		reCentre()
+		saveFile(fileName, reverse)
+		
+		fileIn.close()
+		print("File closed")
 
 	return vertic_picture, norm_picture
 
@@ -136,9 +156,50 @@ def reCentre():
 		i += 3
 
 
+def reverseTab():
+	global vertic_picture, norm_picture
 
+	i = len(norm_picture) - 1
+	while i > 0:
+		tmpVert.append(vertic_picture[3*i])
+		tmpVert.append(vertic_picture[3*i+1])
+		tmpVert.append(vertic_picture[3*i+2])
+		tmpNorm.append(norm_picture[i])
+		i -= 1
+	return tmpVert, tmpNorm
 
+def loadFile(fileName, reverse):
+	global vertic_picture, norm_picture
+	pathVertices = "../ressources/preLoad/"+fileName+str(reverse)+".vert.npy"
+	pathNormales = "../ressources/preLoad/"+fileName+str(reverse)+".norm.npy"
+	try:
+		vertic_picture = numpy.load(pathVertices)
+		norm_picture = numpy.load(pathNormales)
+	except ValueError:
+		print()
+		print()
+		print(ValueError)
+		print()
+	except:
+		print("Files don't loaded")
+		return False
+	print("Files loaded")
+	return True
 
+def saveFile(fileName, reverse):
+	global vertic_picture, norm_picture
+	pathVertices = "../ressources/preLoad/"+fileName+str(reverse)+".vert"
+	pathNormales = "../ressources/preLoad/"+fileName+str(reverse)+".norm"
+	try:
+		numpy.save(pathVertices, vertic_picture)
+		numpy.save(pathNormales, norm_picture)
+	except ValueError:
+		print()
+		print()
+		print(ValueError)
+		print()
+		overall.stopApplication()
+	print("Files saved")
 
 
 

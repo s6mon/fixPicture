@@ -7,11 +7,13 @@ uniform mat4 object_mat;
 
 out float color_factor;
 
-const vec3 light = vec3(0, 0, 6);
+const vec3 light = vec3(0, 0, 15);
 
 vec3 l;
 in vec3 position;
 in vec3 normale;
+
+
 
 void main (){
 	//Projection * MV * Rotation/Translation
