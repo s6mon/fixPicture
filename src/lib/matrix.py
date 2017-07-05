@@ -21,13 +21,15 @@ def v_cross(u, v):
 	"""crossing matrix"""
 def m_lookAt(eye, center, up):
 	"""lookAt function"""
-def m_rotation_object(vecteur, angle):
+def m_rotation(vecteur, angle):
 	"""prend en param le vecteur qui indique sur quel vecteur on pivote
 	et de quel angle on pivote"""
 def multAny(a, b):
 	""""""
-def m_translate_object(x, y, z):
+def m_translate(x, y, z):
 	"""Translate object retourne une matrice 4x4 de translation"""
+def pivot(axis, angleRot, pointPivot):
+	"""retourne la matrice qui va pivoter autour d'un point de pivot"""
 
 #########################################
 #			END OF DECLARATION			#
@@ -102,7 +104,7 @@ def m_lookAt(eye, center, up):
 	        -eye[0],-eye[1],-eye[2], 1 ]
 	return m_mult(T, R)
 
-def m_rotation_object(vecteur, angle):
+def m_rotation(vecteur, angle):
 	v = v_normalize(vecteur)
 	s = math.sin(angle)
 	c = math.cos(angle)
@@ -165,7 +167,7 @@ def pivot(axis, angleRot, pointPivot):
     
     
     translationI = m_translate([-x for x in pointPivot])
-    rotation = m_rotation_object(axis, angleRot)
+    rotation = m_rotation(axis, angleRot)
     translation = m_translate(pointPivot)
     
     return m_mult(translationI, m_mult(rotation, translation))

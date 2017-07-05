@@ -14,23 +14,28 @@ import lib.viewpoint as vp
 import lib.matrix as matrix
 import lib.parser as parser
 import lib.overall as overall
+import lib.drawExpe as draw
 
+test = False
+expe = False
 
 picture_vbos, pointing_vbos = None, None
-window_w , window_h = 800, 1080
+window_w , window_h = 900, 900
 pi_shader, po_shader = None, None
 vertic_picture = []
 norm_picture = []
 pdp = [0., 0., 0.]
 
 nameFile = None
+reverse = -1
 
 mouse = numpy.array([0, 0, None, None, 0, 0])
 tech_feedback = numpy.array([])
 
+
 #MVP var
 class Camera:
-    def __init__(self, fov = 45, ratio = 4/3, near = 0.1, far = 1000, position = [0,0,1], looking = [0,0,0], up = [0,1,0]):
+    def __init__(self, fov = 45, ratio = 4/3, near = 0.1, far = 1000, position = [0,0,1.], looking = [0,0,0], up = [0,1,0]):
         self.fov = fov
         self.ratio = ratio
         self.near = near
@@ -39,8 +44,9 @@ class Camera:
         self.looking = looking
         self.up = up
 
-camera = Camera(ratio = window_w/window_h, position = [0,0,3])
-angleRot, sens, angle1, angle2 = 0.0, 1.0, math.pi/6, -math.pi/6
+camera = Camera(ratio = window_w/window_h)
+
+angleRot, sens, angle1, angle2 = 0.0, 1.0, -math.pi, -math.pi/6
 
 
 def init_env():
@@ -83,20 +89,38 @@ def init_env():
     glClearColor(1.0, 1.0, 1.0, 1.0)
     glEnable(GL_DEPTH_TEST)
     glEnable(GL_CULL_FACE)
-    #glFrontFace(GL_CW)
-    #glDepthFunc(GL_LESS)
-    #glutSetCursor(GLUT_CURSOR_NONE)
+    glFrontFace(GL_CW)
+    glDepthFunc(GL_LESS)
+    glutSetCursor(GLUT_CURSOR_NONE)
     
     print('Environment booted')
 
 def init():
     global picture_vbos, pointing_vbos
     global vertic_picture, norm_picture
+    global vertices_tab
+
 
     pointer_sh_attr = [5]
     
-    #parse fichier d'entree
-    vertic_picture, norm_picture = parser.parse(nameFile)
+    if test:
+        #parse fichier d'entree
+        vertic_picture, norm_picture = parser.parse(nameFile, reverse) #le 2eme param sert à inverser les sommets
+    elif expe:
+        #=====================TEST=======================#
+        # draw.ring(vertic_picture, norm_picture, [0., 0., 0.], 1, 1.2, 0, 4)
+        # draw.ringAskew(vertic_picture, norm_picture, [0., 0., 0.], 2, 4, 0, 2, 4)
+        # draw.ring(vertic_picture, norm_picture, [0., 0., 0.], 4.1, 4.3, 2, 50)
+        #draw.ringAskew(vertic_picture, norm_picture, [0., 0., 0.], 4.5, 6.5, 2, 0, 50)
+        #================================================#
+
+        distance = draw.drawExpe(vertic_picture, norm_picture, [0., 0., 0.], 10, 2, 5, 1)
+        camera.position[2] = (distance + 5.)
+        print(camera.position[2])
+
+        vertic_picture = numpy.array(vertic_picture, dtype='float32')
+        norm_picture = numpy.array(norm_picture, dtype='float32')
+
 
     #creation des shaders
     try:
@@ -119,7 +143,6 @@ def init():
     glVertexAttribPointer(picture_vbos[0], 3, GL_FLOAT, GL_FALSE, 0, None)
     glEnableVertexAttribArray(picture_vbos[0])
     
-    #passage du tableau des normales
     glBindBuffer(GL_ARRAY_BUFFER, picture_vbos[1])
     glBufferData(GL_ARRAY_BUFFER, norm_picture, GL_DYNAMIC_DRAW)
     glVertexAttribPointer(picture_vbos[1], 3, GL_FLOAT, GL_FALSE, 0, None)
@@ -166,18 +189,18 @@ def projection(shader, matp, matm, mato):
 def new_object_position():
     global angleRot, angle, sens
     axe = [0., 1., 0.]
-
-    m_persp_object = matrix.pivot(axe, angleRot, pdp)
     
-    if angleRot >= angle1:
-        sens = -1
-    elif angleRot <= angle2:
-        sens = 1
-
-    if sens == 1:
-        angleRot += math.pi/1000
-    elif sens == -1:
-        angleRot -= math.pi/1000
+    m_persp_object = matrix.pivot(axe, angleRot, [0., 0., 0.])
+    
+    # if angleRot >= angle1:
+    #     sens = -1
+    # elif angleRot <= angle2:
+    #     sens = 1
+    
+    # if sens == 1:
+    angleRot += math.pi/1000
+    # elif sens == -1:
+    #     angleRot -= math.pi/1000
     
     glUseProgram(pi_shader)
     projection(pi_shader, camera.persp_projection, camera.persp_modelview, m_persp_object)
@@ -252,14 +275,31 @@ def idle():
 
 def main():
     print('====> START')
-    global pi_shader, po_shader, nameFile
+    global pi_shader, po_shader, nameFile, reverse, test, expe
     
     glutInit(sys.argv)
-    if len(sys.argv) < 2:
+    #on récupère les paramètres passé
+    if len(sys.argv) > 4:
        print("Nombre d'argument incorrect")
        overall.stopApplication()
-    else:
-       nameFile = sys.argv[1]
+
+    elif sys.argv[1] == "test":
+        if len(sys.argv) < 4:
+            print("Nombre d'argument incorrect")
+            overall.stopApplication()
+        test = True
+        print("Début essai ...")
+        nameFile = sys.argv[2]
+        reverse = int(sys.argv[3])
+
+    elif sys.argv[1] == "expe":
+        expe = True
+        print("Début expérimentation ...")
+
+    if not test and not expe:
+        print("Les arguments passé sont incorrects")
+        overall.stopApplication()
+
     init_env()
     
     pi_shader, po_shader = init()
@@ -286,8 +326,12 @@ def display():
     
     glBindBuffer(GL_ARRAY_BUFFER, picture_vbos[1])
     glBufferData(GL_ARRAY_BUFFER, norm_picture, GL_DYNAMIC_DRAW)
-    
-    glDrawArrays(GL_TRIANGLES, 0, int(len(vertic_picture)/3))
+
+    if expe:
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, int(len(vertic_picture)/3))
+    elif test:
+        glDrawArrays(GL_TRIANGLES, 0, int(len(vertic_picture)/3))
+
     
     #Intersection between the mouse ray and the scene
     if  mouse[0] >= 0 and mouse[0] <= window_w and \
