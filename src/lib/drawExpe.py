@@ -14,13 +14,13 @@ yList = []
 
 plan = [1,1,0]
 
-def drawExpe (verticesDrawing, normalesDrawing, center, amplitude, width, height, nbRings):
+def drawExpe (verticesDrawing, normalesDrawing, center, amplitude, width, height, nbRings, H0):
 	"""fonction qui à partir d'un anneau donné renvoie l'image d'expe associé"""
-def ring (verticesDrawing, normalesDrawing, center, radius1, radius2, nbSegments):
+def ring (verticesDrawing, normalesDrawing, center, radius1, radius2, height, nbSegments):
 	"""calcule les sommets de triangles pour faire des anneaux"""
 def ringAskew (verticesDrawing, normalesDrawing, center, radius1, radius2, height1, height2, nbSegments):
 	""""""
-def fullList(objectList):
+def fullList(objectList, maList):
 	""""""
 def fullMainList(mainTab, tmp):
 	""""""
@@ -28,13 +28,13 @@ def v_sub (v1, v2):
 	""""""
 def verticeCompute(center, theta, radius, height):
 	""""""
-def normaleCompute(plan, v1, v2):
+def normaleCompute(v1, v2, v3):
 	""""""
 def fittsLaw_Id (A, W):
 	"""retourne Id"""
 def fittsLaw_W (Id, A):
 	"""retourne W"""
-def heightLaw_H (A, Step, Id):
+def heightLaw_H (A, a, H):
 	"""retourne H"""
 
 #########################################
@@ -49,7 +49,7 @@ class Ring:
 		self.height = 0
 
 
-def drawExpe (verticesDrawing, normalesDrawing, center, amplitude, width, height, nbRings):
+def drawExpe (verticesDrawing, normalesDrawing, center, amplitude, width, height, nbRings, H0):
 	
 	rings = []
 	Id = fittsLaw_Id(amplitude, width)
@@ -61,16 +61,16 @@ def drawExpe (verticesDrawing, normalesDrawing, center, amplitude, width, height
 		rings.append(Ring(amplitude = (i+1)*step))
 		i += 1
 
-	#en déduire largeur ET hauteur
-	i = len(rings) - 1
-	A0 = height - step * nbRings * Id
-	while i >= 0:
-		rings[i].width = fittsLaw_W(Id, rings[i].amplitude)
-		if i%2 != 0:
-			rings[i].height = heightLaw_H(rings[i].amplitude, step, Id) + A0
-		else:
-			rings[i].height = 0
-		i -= 1
+	print("======")
+	#en déduire largeur et hauteur
+	i = 0
+	alternance = H0
+	while i < len(rings):
+		amplitudeCurrent = rings[i].amplitude
+		rings[i].width = fittsLaw_W(Id, amplitudeCurrent)
+		rings[i].height = heightLaw_H(amplitude, amplitudeCurrent, height) * alternance
+		alternance = 1 - alternance
+		i += 1
 
 	#calculer les sommets des anneaux et les sommets des anneaux oblique (cone coupé)
 	i = 0
@@ -173,8 +173,8 @@ def fittsLaw_W (Id, A):
 	return (math.pow(2, Id) - 1) * A
 
 #return height
-def heightLaw_H (A, Step, Id):
-	return (A - Step) * Id
+def heightLaw_H (A, a, H):
+	return a*H / A
 
 def maxAxis():
 	drawWidth = float(max(xList)) - float(min(xList))
