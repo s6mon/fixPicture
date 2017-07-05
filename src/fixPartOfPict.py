@@ -115,9 +115,8 @@ def init():
         #draw.ringAskew(vertic_picture, norm_picture, [0., 0., 0.], 4.5, 6.5, 2, 0, 50)
         #================================================#
 
-        distance = draw.drawExpe(vertic_picture, norm_picture, [0., 0., 0.], 10, 2, 5, 1)
+        distance = draw.drawExpe(vertic_picture, norm_picture, [0., 0., 0.], 10, 2, 5, 8, 1)
         camera.position[2] = (distance + 5.)
-        print(camera.position[2])
 
         vertic_picture = numpy.array(vertic_picture, dtype='float32')
         norm_picture = numpy.array(norm_picture, dtype='float32')
