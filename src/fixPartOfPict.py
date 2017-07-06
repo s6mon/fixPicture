@@ -18,19 +18,35 @@ import lib.drawExpe as draw
 
 test = False
 expe = False
+pdpE = False
 
 picture_vbos, pointing_vbos = None, None
-window_w , window_h = 900, 900
 pi_shader, po_shader = None, None
 vertic_picture = []
 norm_picture = []
-pdp = [0., 0., 0.]
 
 nameFile = None
-reverse = -1
 
 mouse = numpy.array([0, 0, None, None, 0, 0])
 tech_feedback = numpy.array([])
+
+angleRot = 0.0
+
+
+#==============================VARIABLES REGLABLES==============================#
+    #CAMERA
+axis = [0, 1, 0] #Défini l'axe autour du quel on fait la rotation
+angle0 = -1 #le centre de l'arc de cercle de la rotation | -1 pour tourner continu
+arcAngle = math.pi #la valeur de l'arc de cercle
+speed = 0 # 1 => vitesse = pi/1000
+pdp = [0., 0., 0.] #point de pivot initial ou fixe selon la technique
+sens = -1
+    #FENETRE
+window_w , window_h = 900, 900
+    #ORDRE DES SOMMETS
+reverse = -1
+#===============================================================================#
+
 
 
 #MVP var
@@ -46,7 +62,6 @@ class Camera:
 
 camera = Camera(ratio = window_w/window_h)
 
-angleRot, sens, angle1, angle2 = 0.0, 1.0, -math.pi, -math.pi/6
 
 
 def init_env():
@@ -107,14 +122,8 @@ def init():
         #parse fichier d'entree
         vertic_picture, norm_picture = parser.parse(nameFile, reverse) #le 2eme param sert à inverser les sommets
     elif expe:
-        #=====================TEST=======================#
-        # draw.ring(vertic_picture, norm_picture, [0., 0., 0.], 1, 1.2, 0, 4)
-        # draw.ringAskew(vertic_picture, norm_picture, [0., 0., 0.], 2, 4, 0, 2, 4)
-        # draw.ring(vertic_picture, norm_picture, [0., 0., 0.], 4.1, 4.3, 2, 50)
-        #draw.ringAskew(vertic_picture, norm_picture, [0., 0., 0.], 4.5, 6.5, 2, 0, 50)
-        #================================================#
-
-        distance = draw.drawExpe(vertic_picture, norm_picture, [0., 0., 0.], 10, 2, 5, 8, 1)
+        #cré le modèle
+        distance = draw.drawExpe(vertic_picture, norm_picture, [0., 0., 0.], 20, 2, 3, 5, 1)
         camera.position[2] = (distance + 5.)
 
         vertic_picture = numpy.array(vertic_picture, dtype='float32')
@@ -186,21 +195,16 @@ def projection(shader, matp, matm, mato):
     glUniformMatrix4fv(unif_o, 1, False, mato)
 
 def new_object_position():
-    global angleRot, angle, sens
-    axe = [0., 1., 0.]
-    
-    m_persp_object = matrix.pivot(axe, angleRot, [0., 0., 0.])
-    
-    # if angleRot >= angle1:
-    #     sens = -1
-    # elif angleRot <= angle2:
-    #     sens = 1
-    
-    # if sens == 1:
-    angleRot += math.pi/1000
-    # elif sens == -1:
-    #     angleRot -= math.pi/1000
-    
+
+    global sens, angleRot
+
+    angleRot = angleRot + (speed * math.pi/1000 * (sens-0.5)*2)
+    if angle0 != -1:
+        if angleRot >= (angle0+arcAngle/2) or angleRot <= (angle0-arcAngle/2):
+            sens = 1 - sens
+
+    m_persp_object = matrix.pivot(axis, angleRot, pdp)
+
     glUseProgram(pi_shader)
     projection(pi_shader, camera.persp_projection, camera.persp_modelview, m_persp_object)
 
@@ -215,6 +219,7 @@ def init_projections(pi_shader, po_shader):
                                                         camera.looking,
                                                         camera.up))
     
+    #?a voir avec mike ?
     new_object_position()
     
     glUseProgram(po_shader)
@@ -278,6 +283,7 @@ def main():
     
     glutInit(sys.argv)
     #on récupère les paramètres passé
+    #===================GET BACK PARAM===================#
     if len(sys.argv) > 4:
        print("Nombre d'argument incorrect")
        overall.stopApplication()
@@ -289,15 +295,20 @@ def main():
         test = True
         print("Début essai ...")
         nameFile = sys.argv[2]
-        reverse = int(sys.argv[3])
+        pdpE = bool(int((sys.argv[3])))
 
     elif sys.argv[1] == "expe":
+        if len(sys.argv) < 3:
+            print("Nombre d'argument incorrect")
+            overall.stopApplication()
         expe = True
+        pdpE = bool(int(sys.argv[2]))
         print("Début expérimentation ...")
 
     if not test and not expe:
         print("Les arguments passé sont incorrects")
         overall.stopApplication()
+    #====================================================#
 
     init_env()
     
@@ -313,9 +324,11 @@ def main():
     return
 
 def display():
+    global tech_feedback, pdp
+
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
     
-    global tech_feedback, pdp
+    #faire la rotation deplacer le point de pivot (pdp)
     new_object_position()
     
     #display object at screen
@@ -326,6 +339,7 @@ def display():
     glBindBuffer(GL_ARRAY_BUFFER, picture_vbos[1])
     glBufferData(GL_ARRAY_BUFFER, norm_picture, GL_DYNAMIC_DRAW)
 
+    #technique de d'affichage des triangles différentes
     if expe:
         glDrawArrays(GL_TRIANGLE_STRIP, 0, int(len(vertic_picture)/3))
     elif test:
@@ -333,12 +347,13 @@ def display():
 
     
     #Intersection between the mouse ray and the scene
-    if  mouse[0] >= 0 and mouse[0] <= window_w and \
-        mouse[1] >= 0 and mouse[1] <= window_h:
-        pdpbis = mouse_intersection(mouse[0], mouse[1], camera, window_w, window_h)
-        if pdpbis[0]  != "inf":
-            pdp = pdpbis
-    
+    if pdpE:
+        if  mouse[0] >= 0 and mouse[0] <= window_w and \
+            mouse[1] >= 0 and mouse[1] <= window_h:
+            pdpbis = mouse_intersection(mouse[0], mouse[1], camera, window_w, window_h)
+            if pdpbis[0]  != "inf":
+                pdp = pdpbis
+
     #display pointer at screen
     tech_feedback = cursor_feedback(mouse[:2])
     
