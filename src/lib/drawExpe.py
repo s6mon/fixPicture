@@ -34,8 +34,12 @@ def fittsLaw_Id (A, W):
 	"""retourne Id"""
 def fittsLaw_W (Id, A):
 	"""retourne W"""
-def heightLaw_H (A, a, H):
+def law_H (A, a, H):
 	"""retourne H"""
+def law_a (A, nbRings, num):
+	"""retourne amplitude courante"""
+def maxAxis():
+	"""find delata max"""
 
 #########################################
 #           END OF DECLARATION          #
@@ -58,7 +62,7 @@ def drawExpe (verticesDrawing, normalesDrawing, center, amplitude, width, height
 	#determiner position en x (rayon) des différents cercles
 	i = 0
 	while i <= nbRings:
-		rings.append(Ring(amplitude = (i+1)*step))
+		rings.append(Ring(amplitude = law_a(amplitude, nbRings, i)))
 		i += 1
 
 	print("======")
@@ -68,10 +72,11 @@ def drawExpe (verticesDrawing, normalesDrawing, center, amplitude, width, height
 	while i < len(rings):
 		amplitudeCurrent = rings[i].amplitude
 		rings[i].width = fittsLaw_W(Id, amplitudeCurrent)
-		rings[i].height = heightLaw_H(amplitude, amplitudeCurrent, height) * alternance
+		rings[i].height = law_H(amplitude, amplitudeCurrent, height) * alternance
 		alternance = 1 - alternance
 		i += 1
 
+	#showRings(rings)
 	#calculer les sommets des anneaux et les sommets des anneaux oblique (cone coupé)
 	i = 0
 	while i < len(rings):
@@ -173,8 +178,15 @@ def fittsLaw_W (Id, A):
 	return (math.pow(2, Id) - 1) * A
 
 #return height
-def heightLaw_H (A, a, H):
+def law_H (A, a, H):
 	return a*H / A
+
+#return amplitude
+def law_a (A, nbRings, num):
+	step = numpy.log(A) / (nbRings+1)
+	a = numpy.exp(step * (num + 1))
+	return a
+
 
 def maxAxis():
 	drawWidth = float(max(xList)) - float(min(xList))
@@ -183,6 +195,17 @@ def maxAxis():
 		return drawWidth
 	else:
 		return drawHeight
+
+
+def showRings(rings):
+	i = 0
+	while i < len(rings):
+		tmp = rings[i]
+		print("Ring :", i, "=>")
+		print("Amplitude =", tmp.amplitude, "| Width =", tmp.width, "| Height =", tmp.height)
+		i += 1
+
+
 
 
 
