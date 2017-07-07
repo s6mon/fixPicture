@@ -7,7 +7,7 @@ uniform mat4 object_mat;
 
 out float color_factor;
 
-const vec3 light = vec3(0, 0, 15);
+const vec3 light = vec3(5, 0, 15);
 
 vec3 l;
 in vec3 position;

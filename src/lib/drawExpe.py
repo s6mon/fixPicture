@@ -13,11 +13,19 @@ color_tmp    = []
 
 xList = []
 yList = []
+zList = []
+
+CONST_RISE_RING = 1 / 1000
+
+nbRingsToDraw = 0
+numCurrentRing = 0
+nbRingsIn = 0
+thetaTarget = 0
 
 
-def drawExpeEnv (center, amplitude, width, height, nbRings, H0):
+def drawEnv (center, amplitude, width, height, nbRings, H0):
 	"""fonction qui à partir d'un anneau donné renvoie l'image d'expe associé"""
-def drawCibles (center, radius, width, height, nbCibles, numCible):
+def drawCibles (center, amplitude, width, height, nbCibles, numCible):
 	""""""
 def ring (center, radius1, radius2, height, nbSegments):
 	"""calcule les sommets de triangles pour faire des anneaux"""
@@ -57,29 +65,37 @@ class Ring:
 		self.width = 0
 		self.height = 0
 
+def drawExpe (centerEnv, centerTarget, amplitude, width, height, nbRings, H0, nbTargets, numTarget):
+	vertices_Env = []
+	normales_Env = []
+	size = 0
+	vertices_Tar = []
+	normales_Tar = []
+	color_Tar = []
+	if(amplitude < nbRings*width or amplitude == 0 or nbRings < 0 or nbTargets < (numTarget+1) or nbTargets < 0):
+		print("Wrong argument passed to draw.drawExpe")
+		overall.stopApplication()
+	vertices_Env, normales_Env, size = drawEnv(centerEnv, amplitude, width, height, nbRings, H0)
+	vertices_Tar, normales_Tar, color_Tar = drawCibles(centerTarget, amplitude, width/2, height, nbTargets, numTarget)
+	return vertices_Env, normales_Env, size, vertices_Tar, normales_Tar, color_Tar, thetaTarget
 
-def drawExpeEnv (center, amplitude, width, height, nbRings, H0):
-	global vertices_tmp, normales_tmp
+
+def drawEnv (center, amplitude, width, height, nbRings, H0):
+	global vertices_tmp, normales_tmp, nbRingsToDraw, numCurrentRing, nbRingsIn
 	vertices_tmp = []
 	normales_tmp = []
+	nbRingsIn = nbRings
 	
-	if amplitude == 0:
-		print("Mauvais argument passé à drawExpeEnv")
-		overall.stopApplication()
 	rings = []
 	Id = fittsLaw_Id(amplitude, width)
 	step = amplitude / (nbRings+1)
+	nbRingsToDraw = (nbRings + 1) + 2
 	
-	#determiner position en x (rayon) des différents cercles
-	i = 0
-	while i <= nbRings:
-		rings.append(Ring(amplitude = law_a(amplitude, nbRings, i)))
-		i += 1
-
-	#en déduire largeur et hauteur
+	#determiner position en x (rayon) des différents cercles, en déduire largeur et hauteur
 	i = 0
 	alternance = H0
-	while i < len(rings):
+	while i <= nbRingsToDraw:
+		rings.append(Ring(amplitude = law_a(amplitude, nbRings, i)))
 		amplitudeCurrent = rings[i].amplitude
 		rings[i].width = fittsLaw_W(Id, amplitudeCurrent)
 		rings[i].height = law_H(amplitude, amplitudeCurrent, height) * alternance
@@ -89,14 +105,15 @@ def drawExpeEnv (center, amplitude, width, height, nbRings, H0):
 	#showRings(rings)
 	#calculer les sommets des anneaux et les sommets des anneaux oblique (cone coupé)
 	i = 0
-	while i < len(rings):
+	while i < nbRingsToDraw:
 		radius1 = rings[i].amplitude - (rings[i].width / 2)
 		radius2 = rings[i].amplitude + (rings[i].width / 2)
 		height = rings[i].height
 		ring (center, radius1, radius2, height, 50)
+		numCurrentRing = i + 1
 
 		#dessine les cones
-		if (i < (len(rings) - 1)):
+		if (i < (nbRingsToDraw - 1)):
 			radius1 = rings[i].amplitude + (rings[i].width / 2)
 			radius2 = rings[i+1].amplitude - (rings[i+1].width / 2)
 			height1 = rings[i].height
@@ -106,8 +123,8 @@ def drawExpeEnv (center, amplitude, width, height, nbRings, H0):
 
 	return vertices_tmp, normales_tmp, maxAxis()
 
-def drawCibles (center, radius, width, height, nbCibles, numCible):
-	global vertices_tmp, normales_tmp, color_tmp
+def drawCibles (center, amplitude, width, height, nbCibles, numCible):
+	global vertices_tmp, normales_tmp, color_tmp, thetaTarget
 	vertices_tmp = []
 	normales_tmp = []
 	color_tmp = []
@@ -116,11 +133,12 @@ def drawCibles (center, radius, width, height, nbCibles, numCible):
 	i = 0
 	while i < nbCibles:
 		theta = i * deltaAngle 
-		x = math.cos(theta) * radius 
-		y = math.sin(theta) * radius
-		z = height
+		x = math.cos(theta) * amplitude
+		y = math.sin(theta) * amplitude
+		z = height + CONST_RISE_RING
 		if(i == numCible):
 			#coloré la cible dans le champ color !!!!
+			thetaTarget = theta
 			circle (center, [x, y, z], width, (0,1,1), 30)
 		else:
 			circle (center, [x, y, z], width, (0,1,0), 30)
@@ -187,13 +205,16 @@ def circle (center, position, radius, color, nbSegments):
 		i += 1
 
 def fullList(objectList, maList, n):
-	global vertices_tmp, normales_tmp, xList, yList
+	global vertices_tmp, normales_tmp, color_tmp, xList, yList, zList
 	maList.append(objectList[0])
 	maList.append(objectList[1])
 	if(n == 3):
 		maList.append(objectList[2])
+	if maList == vertices_tmp and numCurrentRing <= nbRingsIn:
 		xList.append(objectList[0])
 		yList.append(objectList[1])
+		zList.append(objectList[2])
+	
 
 def fullMainList(mainTab, tmp):
 	i = 0
@@ -211,8 +232,8 @@ def verticeCompute(center, theta, radius, height, position):
 	return(x+position[0], y+position[1], z+position[2])
 
 def normaleCompute(v1, v2, v3):
-	vecteur1 = v_sub(v2, v1)
-	vecteur2 = v_sub(v3, v1)
+	vecteur1 = matrix.v_normalize(v_sub(v2, v1))
+	vecteur2 = matrix.v_normalize(v_sub(v3, v1))
 	return matrix.v_normalize(matrix.v_cross(vecteur1, vecteur2))
 
 #return Id
