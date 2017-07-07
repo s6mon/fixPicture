@@ -4,21 +4,26 @@ import re
 import operator
 
 from . import matrix
+from . import overall
 
 
 vertices_tmp = []
 normales_tmp = []
+color_tmp    = []
 
 xList = []
 yList = []
 
-plan = [1,1,0]
 
-def drawExpe (verticesDrawing, normalesDrawing, center, amplitude, width, height, nbRings, H0):
+def drawExpeEnv (center, amplitude, width, height, nbRings, H0):
 	"""fonction qui à partir d'un anneau donné renvoie l'image d'expe associé"""
-def ring (verticesDrawing, normalesDrawing, center, radius1, radius2, height, nbSegments):
+def drawCibles (center, radius, width, height, nbCibles, numCible):
+	""""""
+def ring (center, radius1, radius2, height, nbSegments):
 	"""calcule les sommets de triangles pour faire des anneaux"""
-def ringAskew (verticesDrawing, normalesDrawing, center, radius1, radius2, height1, height2, nbSegments):
+def ringAskew (center, radius1, radius2, height1, height2, nbSegments):
+	""""""
+def circle (center, position, radius, color, nbSegments):
 	""""""
 def fullList(objectList, maList):
 	""""""
@@ -26,7 +31,7 @@ def fullMainList(mainTab, tmp):
 	""""""
 def v_sub (v1, v2):
 	""""""
-def verticeCompute(center, theta, radius, height):
+def verticeCompute(center, theta, radius, height, position):
 	""""""
 def normaleCompute(v1, v2, v3):
 	""""""
@@ -53,8 +58,14 @@ class Ring:
 		self.height = 0
 
 
-def drawExpe (verticesDrawing, normalesDrawing, center, amplitude, width, height, nbRings, H0):
+def drawExpeEnv (center, amplitude, width, height, nbRings, H0):
+	global vertices_tmp, normales_tmp
+	vertices_tmp = []
+	normales_tmp = []
 	
+	if amplitude == 0:
+		print("Mauvais argument passé à drawExpeEnv")
+		overall.stopApplication()
 	rings = []
 	Id = fittsLaw_Id(amplitude, width)
 	step = amplitude / (nbRings+1)
@@ -65,7 +76,6 @@ def drawExpe (verticesDrawing, normalesDrawing, center, amplitude, width, height
 		rings.append(Ring(amplitude = law_a(amplitude, nbRings, i)))
 		i += 1
 
-	print("======")
 	#en déduire largeur et hauteur
 	i = 0
 	alternance = H0
@@ -83,7 +93,7 @@ def drawExpe (verticesDrawing, normalesDrawing, center, amplitude, width, height
 		radius1 = rings[i].amplitude - (rings[i].width / 2)
 		radius2 = rings[i].amplitude + (rings[i].width / 2)
 		height = rings[i].height
-		ring (verticesDrawing, normalesDrawing, center, radius1, radius2, height, 50)
+		ring (center, radius1, radius2, height, 50)
 
 		#dessine les cones
 		if (i < (len(rings) - 1)):
@@ -91,60 +101,96 @@ def drawExpe (verticesDrawing, normalesDrawing, center, amplitude, width, height
 			radius2 = rings[i+1].amplitude - (rings[i+1].width / 2)
 			height1 = rings[i].height
 			height2 = rings[i+1].height
-			ringAskew(verticesDrawing, normalesDrawing, center, radius1, radius2, height1, height2, 50)
+			ringAskew(center, radius1, radius2, height1, height2, 50)
 		i += 1
 
+	return vertices_tmp, normales_tmp, maxAxis()
 
-	return maxAxis()
+def drawCibles (center, radius, width, height, nbCibles, numCible):
+	global vertices_tmp, normales_tmp, color_tmp
+	vertices_tmp = []
+	normales_tmp = []
+	color_tmp = []
+
+	deltaAngle = 2 * math.pi / nbCibles
+	i = 0
+	while i < nbCibles:
+		theta = i * deltaAngle 
+		x = math.cos(theta) * radius 
+		y = math.sin(theta) * radius
+		z = height
+		if(i == numCible):
+			#coloré la cible dans le champ color !!!!
+			circle (center, [x, y, z], width, (0,1,1), 30)
+		else:
+			circle (center, [x, y, z], width, (0,1,0), 30)
+		i += 1
+
+	return vertices_tmp, normales_tmp, color_tmp
 
 
-def ring (verticesDrawing, normalesDrawing, center, radius1, radius2, height, nbSegments):
+def ring (center, radius1, radius2, height, nbSegments):
+	pos = [0,0,0]
 	i = 0
 	while i <= nbSegments:
 		theta1 = 2 * math.pi * (i%nbSegments) / nbSegments
 		theta2 = 2 * math.pi * ((i+1)%nbSegments) / nbSegments
-		vertice2 = verticeCompute(center, theta1, radius2, height)
-		vertice1 = verticeCompute(center, theta1, radius1, height)
-		vertice3 = verticeCompute(center, theta2, radius1, height)
+		vertice2 = verticeCompute(center, theta1, radius2, height, pos)
+		vertice1 = verticeCompute(center, theta1, radius1, height, pos)
+		vertice3 = verticeCompute(center, theta2, radius1, height, pos)
 
-		fullList(vertice2, vertices_tmp) #l'ordre est important !
-		fullList(vertice1, vertices_tmp)
+		fullList(vertice2, vertices_tmp, 3) #l'ordre est important !
+		fullList(vertice1, vertices_tmp, 3)
 
 		n = normaleCompute(vertice1, vertice2, vertice3)
-		fullList((n, n), normales_tmp)
+		fullList((n, n), normales_tmp, 2)
 		
 		i += 1
 
-	fullMainList(verticesDrawing, vertices_tmp)
-	fullMainList(normalesDrawing, normales_tmp)
-
-
-def ringAskew (verticesDrawing, normalesDrawing, center, radius1, radius2, height1, height2, nbSegments):
+def ringAskew (center, radius1, radius2, height1, height2, nbSegments):
+	pos = [0,0,0]
 	i = 0
 	while i <= nbSegments:
 		theta1 = 2 * math.pi * (i%nbSegments) / nbSegments
 		theta2 = 2 * math.pi * ((i+1)%nbSegments) / nbSegments
-		vertice2 = verticeCompute(center, theta1, radius2, height2)
-		vertice1 = verticeCompute(center, theta1, radius1, height1)
-		vertice3 = verticeCompute(center, theta2, radius1, height2)
+		vertice2 = verticeCompute(center, theta1, radius2, height2, pos)
+		vertice1 = verticeCompute(center, theta1, radius1, height1, pos)
+		vertice3 = verticeCompute(center, theta2, radius1, height2, pos)
 
-		fullList(vertice2, vertices_tmp) #l'ordre est important !
-		fullList(vertice1, vertices_tmp)
+		fullList(vertice2, vertices_tmp, 3) #l'ordre est important !
+		fullList(vertice1, vertices_tmp, 3)
 
 		n = normaleCompute(vertice1, vertice2, vertice3)
-		fullList((n, n, n), normales_tmp)
+		fullList((n, n, n), normales_tmp, 2)
 
 		i += 1
 
-	fullMainList(verticesDrawing, vertices_tmp)
-	fullMainList(normalesDrawing, normales_tmp)
+def circle (center, position, radius, color, nbSegments):
+	i = 0
+	height = position[2]
+	while i < nbSegments:
+		theta1 = 2 * math.pi * i / nbSegments
+		theta2 = 2 * math.pi * ((i+1)%nbSegments) / nbSegments
+		vertice1 = (center[0] + position[0], center[1] + position[1], center[2] + position[2])
+		vertice2 = verticeCompute(center, theta1, radius, 0, position)
+		vertice3 = verticeCompute(center, theta2, radius, 0, position)
 
+		fullList(vertice1, vertices_tmp, 3)
+		fullList(vertice3, vertices_tmp, 3)
+		fullList(vertice2, vertices_tmp, 3)
 
-def fullList(objectList, maList):
+		n = normaleCompute(vertice1, vertice2, vertice3)
+		fullList((n, n, n), normales_tmp, 3)
+
+		fullList((color, color, color), color_tmp, 3)
+
+		i += 1
+
+def fullList(objectList, maList, n):
 	global vertices_tmp, normales_tmp, xList, yList
 	maList.append(objectList[0])
 	maList.append(objectList[1])
-	if(maList == vertices_tmp):
+	if(n == 3):
 		maList.append(objectList[2])
 		xList.append(objectList[0])
 		yList.append(objectList[1])
@@ -158,11 +204,11 @@ def fullMainList(mainTab, tmp):
 def v_sub (v1, v2):
 	return [v2[0] - v1[0], v2[1] - v1[1], v2[2] - v1[2]]
 
-def verticeCompute(center, theta, radius, height):
+def verticeCompute(center, theta, radius, height, position):
 	x = (math.cos(theta) * radius) + center[0]
 	y = (math.sin(theta) * radius) + center[1]
 	z = height + center[2]
-	return(x, y, z)
+	return(x+position[0], y+position[1], z+position[2])
 
 def normaleCompute(v1, v2, v3):
 	vecteur1 = v_sub(v2, v1)

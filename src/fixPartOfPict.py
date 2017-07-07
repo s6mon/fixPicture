@@ -17,14 +17,21 @@ import lib.parser as parser
 import lib.overall as overall
 import lib.drawExpe as draw
 
+import lib.teston as teston
+
 test = False
 expe = False
 pdpE = False
 
-picture_vbos, pointing_vbos = None, None
-pi_shader, po_shader = None, None
+picture_vbos, pointing_vbos, target_vbos = None, None, None #TODO add target_vbos
+pi_shader, po_shader, ta_shader = None, None, None #TODO add ta_shader
+
 vertic_picture = []
 norm_picture = []
+
+vertic_target = []
+norm_target = []
+color_target = []
 
 nameFile = None
 
@@ -36,12 +43,13 @@ angleRot = 0.0
 
 #==============================VARIABLES REGLABLES==============================#
     #CAMERA
-axis = [0, 1, 0] #Défini l'axe autour du quel on fait la rotation
-angle0 = -1 #le centre de l'arc de cercle de la rotation | -1 pour tourner continu
-arcAngle = math.pi #la valeur de l'arc de cercle
-speed = 0 # 1 => vitesse = pi/1000
+axisRot = [0, 1, 0] #Défini l'axe autour du quel on fait la rotation
+angle0 = 0 #le centre de l'arc de cercle de la rotation | -1 pour tourner continu
+arcAngle = 2 * math.pi / 3 #la valeur de l'arc de cercle
+speed = 10 # 1 => vitesse = pi/1000
 pdp = [0., 0., 0.] #point de pivot initial ou fixe selon la technique
-sens = -1
+sens = 1 #sens de rotation initial ou continu si angle0 = -1
+initPosCamera = [0, 0, 7] #position initiale de la camera
     #FENETRE
 window_w , window_h = 900, 900
     #ORDRE DES SOMMETS
@@ -61,7 +69,7 @@ class Camera:
         self.looking = looking
         self.up = up
 
-camera = Camera(ratio = window_w/window_h)
+camera = Camera(ratio = window_w/window_h, position = initPosCamera)
 
 
 
@@ -107,28 +115,56 @@ def init_env():
     glEnable(GL_CULL_FACE)
     glFrontFace(GL_CW)
     glDepthFunc(GL_LESS)
-    glutSetCursor(GLUT_CURSOR_NONE)
+    #glutSetCursor(GLUT_CURSOR_NONE)
+
+    if (angle0 >= 0 and angle0 <= 2*math.pi):
+        angleRot = angle0
+    else:
+        angleRot = 0.0
+
     
     print('Environment booted')
 
 def init():
-    global picture_vbos, pointing_vbos
+    global picture_vbos, pointing_vbos, target_vbos
     global vertic_picture, norm_picture
-    global vertices_tab
+    global vertic_target, norm_target, color_target
 
 
     pointer_sh_attr = [5]
+
+    vert_tmp = []
+    norm_tmp = []
+    color_tmp = []
     
     if test:
         #parse fichier d'entree
         vertic_picture, norm_picture = parser.parse(nameFile, reverse) #le 2eme param sert à inverser les sommets
     elif expe:
         #cré le modèle
-        distance = draw.drawExpe(vertic_picture, norm_picture, [0., 0., 0.], 20, 2, 3, 5, 1)
-        camera.position[2] = (distance + 5.)
+        vert_tmp, norm_tmp, cameraZ = draw.drawExpeEnv([0., 0., 0.], 10, 2, 4, 5, 0)
+        draw.fullMainList(vertic_picture, vert_tmp)
+        draw.fullMainList(norm_picture, norm_tmp)
+        camera.position[2] = (cameraZ + 5.)
 
         vertic_picture = numpy.array(vertic_picture, dtype='float32')
         norm_picture = numpy.array(norm_picture, dtype='float32')
+
+
+    vert_tmp = []
+    norm_tmp = []
+    color_tmp = []
+
+    #cré les cibles
+    vert_tmp, norm_tmp, color_tmp = draw.drawCibles([0, 0, 0], 10, 1, 4.001, 5, 0)
+
+    draw.fullMainList(vertic_target, vert_tmp)
+    draw.fullMainList(norm_target, norm_tmp)
+    draw.fullMainList(color_target, color_tmp)
+
+    vertic_target = numpy.array(vertic_target, dtype='float32')
+    norm_target = numpy.array(norm_target, dtype='float32')
+    color_target = numpy.array(color_target, dtype='float32')
 
 
     #creation des shaders
@@ -145,6 +181,7 @@ def init():
     
     picture_vbos = glGenBuffers(2)
     pointing_vbos = [glGenBuffers(1)]
+    target_vbos = glGenBuffers(3) #ajout glGenBuffers #TODO
     
     ###picture shader###
     glBindBuffer(GL_ARRAY_BUFFER, picture_vbos[0])
@@ -181,9 +218,36 @@ def init():
     if not pointer_sh:
         exit(1)
     print('Pointer shader created')
+
+    ###targets shader###
+    #TODO create targets shader ...
+    glBindBuffer(GL_ARRAY_BUFFER, target_vbos[0])
+    glBufferData(GL_ARRAY_BUFFER, vertic_target, GL_DYNAMIC_DRAW)
+    glVertexAttribPointer(target_vbos[0], 3, GL_FLOAT, GL_FALSE, 0, None)
+    glEnableVertexAttribArray(target_vbos[0])
+
+    glBindBuffer(GL_ARRAY_BUFFER, target_vbos[1])
+    glBufferData(GL_ARRAY_BUFFER, vertic_target, GL_DYNAMIC_DRAW)
+    glVertexAttribPointer(target_vbos[1], 3, GL_FLOAT, GL_FALSE, 0, None)
+    glEnableVertexAttribArray(target_vbos[1])
+
+    glBindBuffer(GL_ARRAY_BUFFER, target_vbos[2])
+    glBufferData(GL_ARRAY_BUFFER, norm_target, GL_DYNAMIC_DRAW)
+    glVertexAttribPointer(target_vbos[2], 3, GL_FLOAT, GL_FALSE, 0, None)
+    glEnableVertexAttribArray(target_vbos[2])
+
+    targets_sh = sh.create('../shader/target_vert.glsl',
+                           None,
+                           '../shader/target_frag.glsl',
+                           [target_vbos[0], target_vbos[1], target_vbos[2]],
+                           ['position', 'normale', 'color'])
+
+    if not targets_sh:
+        exit(1)
+    print("Targets shader created")
     
     #retourne les ID des programmes shaders
-    return picture_sh, pointer_sh
+    return picture_sh, pointer_sh, targets_sh #TODO return targets_sh
 
 def projection(shader, matp, matm, mato):
     unif_p = glGetUniformLocation(shader, 'projection_mat')
@@ -203,12 +267,16 @@ def new_object_position():
         if angleRot >= (angle0+arcAngle/2) or angleRot <= (angle0-arcAngle/2):
             sens = 1 - sens
 
-    m_persp_object = matrix.pivot(axis, angleRot, pdp)
+    m_persp_object = matrix.pivot(axisRot, angleRot, pdp)
      
     glUseProgram(pi_shader)
     projection(pi_shader, camera.persp_projection, camera.persp_modelview, m_persp_object)
 
-def init_projections(pi_shader, po_shader):
+    #TODO add gestion pivotement ta_shader
+    glUseProgram(ta_shader)
+    projection(ta_shader, camera.persp_projection, camera.persp_modelview, m_persp_object)
+
+def init_projections(po_shader):
     
     camera.ortho_projection = vp.orthographic(0, window_w, 0, window_h, -1.0, 1.0).T
     camera.ortho_modelview = numpy.identity(4)
@@ -217,8 +285,6 @@ def init_projections(pi_shader, po_shader):
     camera.persp_modelview = numpy.array(matrix.m_lookAt(camera.position,
                                                         camera.looking,
                                                         camera.up))
-    
-    #?a voir avec mike ?
     new_object_position()
     
     glUseProgram(po_shader)
@@ -278,7 +344,7 @@ def idle():
 
 def main():
     print('====> START')
-    global pi_shader, po_shader, nameFile, reverse, test, expe
+    global pi_shader, po_shader, ta_shader, nameFile, reverse, test, expe, pdpE #TODO add ta_shader
     
     glutInit(sys.argv)
     #on récupère les paramètres passé
@@ -311,9 +377,9 @@ def main():
 
     init_env()
     
-    pi_shader, po_shader = init()
+    pi_shader, po_shader, ta_shader = init() #TODO add ta_shader
     
-    init_projections(pi_shader, po_shader)
+    init_projections(po_shader)
     
     glutDisplayFunc(display)
     glutPassiveMotionFunc(mouse_passive)
@@ -323,10 +389,10 @@ def main():
     return
 
 def display():
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
+
     global tech_feedback, pdp
 
-    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
-    
     #faire la rotation deplacer le point de pivot (pdp)
     new_object_position()
     
@@ -338,14 +404,27 @@ def display():
     glBindBuffer(GL_ARRAY_BUFFER, picture_vbos[1])
     glBufferData(GL_ARRAY_BUFFER, norm_picture, GL_DYNAMIC_DRAW)
 
-    #technique de d'affichage des triangles différentes
+    ##technique de d'affichage des triangles différentes
     if expe:
         glDrawArrays(GL_TRIANGLE_STRIP, 0, int(len(vertic_picture)/3))
     elif test:
         glDrawArrays(GL_TRIANGLES, 0, int(len(vertic_picture)/3))
 
-    
+    #TODO
+    glUseProgram(ta_shader)
+    glBindBuffer(GL_ARRAY_BUFFER, target_vbos[0])
+    glBufferData(GL_ARRAY_BUFFER, vertic_target, GL_DYNAMIC_DRAW)
+
+    glBindBuffer(GL_ARRAY_BUFFER, target_vbos[1])
+    glBufferData(GL_ARRAY_BUFFER, norm_target, GL_DYNAMIC_DRAW)
+
+    glBindBuffer(GL_ARRAY_BUFFER, target_vbos[2])
+    glBufferData(GL_ARRAY_BUFFER, color_target, GL_DYNAMIC_DRAW)
+
+    glDrawArrays(GL_TRIANGLES, 0, int(len(vertic_target)/3))
+
     #Intersection between the mouse ray and the scene
+    print(pdpE)
     if pdpE:
         if  mouse[0] >= 0 and mouse[0] <= window_w and \
             mouse[1] >= 0 and mouse[1] <= window_h:
@@ -355,7 +434,7 @@ def display():
 
     #display pointer at screen
     tech_feedback = cursor_feedback(mouse[:2])
-    
+
     glUseProgram(po_shader)
     glBindBuffer(GL_ARRAY_BUFFER, pointing_vbos[0])
     glBufferData(GL_ARRAY_BUFFER, tech_feedback.astype('float32'), GL_DYNAMIC_DRAW)
