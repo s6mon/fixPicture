@@ -39,13 +39,19 @@ mouse = numpy.array([0, 0, None, None, 0, 0])
 tech_feedback = numpy.array([])
 
 angleRot = 0.0
+thetaCible = 0.0
+amplitude = 0
+rayonCible = 0
+
+nbClicError = 0
+nbClicOnTarget = 0
 
 
 #==============================VARIABLES REGLABLES==============================#
     #CAMERA
 axisRot = [0, 1, 0] #Défini l'axe autour du quel on fait la rotation
 angle0 = 0 #le centre de l'arc de cercle de la rotation | -1 pour tourner continu
-arcAngle = 2 * math.pi / 3 #la valeur de l'arc de cercle
+arcAngle = math.pi / 15 #la valeur de l'arc de cercle
 speed = 10 # 1 => vitesse = pi/1000
 pdp = [0., 0., 0.] #point de pivot initial ou fixe selon la technique
 sens = 1 #sens de rotation initial ou continu si angle0 = -1
@@ -104,6 +110,7 @@ def idle():
 
 
 def init_env():
+    global angleRot
     
     glutInitDisplayString('double rgba samples=8 depth core')
     glutInitWindowSize(window_w, window_h)
@@ -130,41 +137,42 @@ def init():
     global vertic_picture, norm_picture
     global vertic_target, norm_target, color_target
 
+    global amplitude, thetaCible, rayonCible
+
 
     pointer_sh_attr = [5]
 
-    vert_tmp = []
-    norm_tmp = []
-    color_tmp = []
+    vert_pic = []
+    norm_pic = []
+    vert_tar = []
+    norm_tar = []
+    color_tar = []
     
     if test:
         #parse fichier d'entree
         vertic_picture, norm_picture = parser.parse(nameFile, reverse) #le 2eme param sert à inverser les sommets
     elif expe:
         #cré le modèle
-        vert_tmp, norm_tmp, cameraZ = draw.drawExpeEnv([0., 0., 0.], 10, 2, 4, 5, 0)
-        draw.fullMainList(vertic_picture, vert_tmp)
-        draw.fullMainList(norm_picture, norm_tmp)
-        camera.position[2] = (cameraZ + 5.)
+        amplitude = 10
+        rayonCible = 1
+        vert_pic, norm_pic, cameraZ, vert_tar, norm_tar, color_tar, thetaTarget = draw.drawExpe([0., 0., 0.], [0. ,0. ,0.], amplitude, rayonCible, 10, 7, 0, 9, 0)
+        
+        draw.fullMainList(vertic_picture, vert_pic)
+        draw.fullMainList(norm_picture, norm_pic)
+
+        draw.fullMainList(vertic_target, vert_tar)
+        draw.fullMainList(norm_target, norm_tar)
+        draw.fullMainList(color_target, color_tar)
 
         vertic_picture = numpy.array(vertic_picture, dtype='float32')
         norm_picture = numpy.array(norm_picture, dtype='float32')
 
+        vertic_target = numpy.array(vertic_target, dtype='float32')
+        norm_target = numpy.array(norm_target, dtype='float32')
+        color_target = numpy.array(color_target, dtype='float32')
 
-    vert_tmp = []
-    norm_tmp = []
-    color_tmp = []
-
-    #cré les cibles
-    vert_tmp, norm_tmp, color_tmp = draw.drawCibles([0, 0, 0], 10, 1, 4.001, 5, 0)
-
-    draw.fullMainList(vertic_target, vert_tmp)
-    draw.fullMainList(norm_target, norm_tmp)
-    draw.fullMainList(color_target, color_tmp)
-
-    vertic_target = numpy.array(vertic_target, dtype='float32')
-    norm_target = numpy.array(norm_target, dtype='float32')
-    color_target = numpy.array(color_target, dtype='float32')
+        camera.position[2] = 55
+        thetaCible = thetaTarget
 
 
     #creation des shaders
@@ -262,10 +270,11 @@ def projection(shader, matp, matm, mato):
 def new_object_position():
     global sens, angleRot
 
-    angleRot = angleRot + (speed * math.pi/1000 * (sens-0.5)*2)
-    if angle0 != -1:
-        if angleRot >= (angle0+arcAngle/2) or angleRot <= (angle0-arcAngle/2):
-            sens = 1 - sens
+    if speed != 0:
+        angleRot = angleRot + (speed * math.pi/1000 * (sens-0.5)*2)
+        if angle0 != -1:
+            if angleRot >= (angle0+arcAngle/2) or angleRot <= (angle0-arcAngle/2):
+                sens = 1 - sens
 
     m_persp_object = matrix.pivot(axisRot, angleRot, pdp)
      
@@ -315,6 +324,32 @@ def mouse_passive(x, y):
     mouse[0] = x
     mouse[1] = glutGet(GLUT_WINDOW_HEIGHT) - y
     glutPostRedisplay()
+
+def mouse_button(button, state, x, y):
+    global nbClicError, nbClicOnTarget
+
+    #t = time
+
+    if(button == GLUT_LEFT_BUTTON and state == GLUT_DOWN):
+        
+        if(overall.isInTarget(thetaCible, angleRot, amplitude, rayonCible, pdp)): #TODO passer les arguments
+            if(nbClicOnTarget == 0):
+                #TODO positionner centre env sur cible 1 (x = amplitude, y = 0, z = cible1.height)
+                    #démarrer le chrono (t1 = time)
+            elif (nbClicOnTarget < 9):
+                #TODO positionner centre env sur cible suivante (angleCible suiv = 4*2*PI/9)
+            else:
+                #TODO :
+                    #t2 = t
+                    #save (t = t1 - t2)
+                    #changer ID => repartir état initial avec nouvel ID
+                    #nbClicError = 0 & nbClicOnTarget = 0
+            nbClicOnTarget += 1
+
+
+        else:
+            nbClicError += 1
+        print(nbClics)
 
 def keyboard(key, x, y):
 
@@ -383,6 +418,7 @@ def main():
     
     glutDisplayFunc(display)
     glutPassiveMotionFunc(mouse_passive)
+    glutMouseFunc(mouse_button)
     glutKeyboardFunc(keyboard)
     glutIdleFunc(idle)
     glutMainLoop()
@@ -424,7 +460,6 @@ def display():
     glDrawArrays(GL_TRIANGLES, 0, int(len(vertic_target)/3))
 
     #Intersection between the mouse ray and the scene
-    print(pdpE)
     if pdpE:
         if  mouse[0] >= 0 and mouse[0] <= window_w and \
             mouse[1] >= 0 and mouse[1] <= window_h:
@@ -438,7 +473,7 @@ def display():
     glUseProgram(po_shader)
     glBindBuffer(GL_ARRAY_BUFFER, pointing_vbos[0])
     glBufferData(GL_ARRAY_BUFFER, tech_feedback.astype('float32'), GL_DYNAMIC_DRAW)
-    glDrawArrays(GL_TRIANGLES, 0, len(tech_feedback))
+    glDrawArrays(GL_TRIANGLES, 0, int(len(tech_feedback)/3))
 
     glutSwapBuffers()
 
