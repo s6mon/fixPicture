@@ -52,10 +52,10 @@ nbClicOnTarget = 0
 axisRot = [0, 1, 0] #Défini l'axe autour du quel on fait la rotation
 angle0 = 0 #le centre de l'arc de cercle de la rotation | -1 pour tourner continu
 arcAngle = math.pi / 15 #la valeur de l'arc de cercle
-speed = 10 # 1 => vitesse = pi/1000
+speed = 0 # 1 => vitesse = pi/1000
 pdp = [0., 0., 0.] #point de pivot initial ou fixe selon la technique
 sens = 1 #sens de rotation initial ou continu si angle0 = -1
-initPosCamera = [0, 0, 7] #position initiale de la camera
+initPosCamera = [0, 0, 4] #position initiale de la camera
     #FENETRE
 window_w , window_h = 900, 900
     #ORDRE DES SOMMETS
@@ -155,7 +155,7 @@ def init():
         #cré le modèle
         amplitude = 10
         rayonCible = 1
-        vert_pic, norm_pic, cameraZ, vert_tar, norm_tar, color_tar, thetaTarget = draw.drawExpe([0., 0., 0.], [0. ,0. ,0.], amplitude, rayonCible, 10, 7, 0, 9, 0)
+        vert_pic, norm_pic, cameraZ, vert_tar, norm_tar, color_tar, thetaTarget = draw.drawExpe([0., 0., 0.], [0. ,0. ,0.], amplitude, rayonCible, 10, 1, 0, 4, 0)
         
         draw.fullMainList(vertic_picture, vert_pic)
         draw.fullMainList(norm_picture, norm_pic)
@@ -229,30 +229,33 @@ def init():
 
     ###targets shader###
     #TODO create targets shader ...
-    glBindBuffer(GL_ARRAY_BUFFER, target_vbos[0])
-    glBufferData(GL_ARRAY_BUFFER, vertic_target, GL_DYNAMIC_DRAW)
-    glVertexAttribPointer(target_vbos[0], 3, GL_FLOAT, GL_FALSE, 0, None)
-    glEnableVertexAttribArray(target_vbos[0])
+    if expe:
+        glBindBuffer(GL_ARRAY_BUFFER, target_vbos[0])
+        glBufferData(GL_ARRAY_BUFFER, vertic_target, GL_DYNAMIC_DRAW)
+        glVertexAttribPointer(target_vbos[0], 3, GL_FLOAT, GL_FALSE, 0, None)
+        glEnableVertexAttribArray(target_vbos[0])
 
-    glBindBuffer(GL_ARRAY_BUFFER, target_vbos[1])
-    glBufferData(GL_ARRAY_BUFFER, vertic_target, GL_DYNAMIC_DRAW)
-    glVertexAttribPointer(target_vbos[1], 3, GL_FLOAT, GL_FALSE, 0, None)
-    glEnableVertexAttribArray(target_vbos[1])
+        glBindBuffer(GL_ARRAY_BUFFER, target_vbos[1])
+        glBufferData(GL_ARRAY_BUFFER, vertic_target, GL_DYNAMIC_DRAW)
+        glVertexAttribPointer(target_vbos[1], 3, GL_FLOAT, GL_FALSE, 0, None)
+        glEnableVertexAttribArray(target_vbos[1])
 
-    glBindBuffer(GL_ARRAY_BUFFER, target_vbos[2])
-    glBufferData(GL_ARRAY_BUFFER, norm_target, GL_DYNAMIC_DRAW)
-    glVertexAttribPointer(target_vbos[2], 3, GL_FLOAT, GL_FALSE, 0, None)
-    glEnableVertexAttribArray(target_vbos[2])
+        glBindBuffer(GL_ARRAY_BUFFER, target_vbos[2])
+        glBufferData(GL_ARRAY_BUFFER, norm_target, GL_DYNAMIC_DRAW)
+        glVertexAttribPointer(target_vbos[2], 3, GL_FLOAT, GL_FALSE, 0, None)
+        glEnableVertexAttribArray(target_vbos[2])
 
-    targets_sh = sh.create('../shader/target_vert.glsl',
-                           None,
-                           '../shader/target_frag.glsl',
-                           [target_vbos[0], target_vbos[1], target_vbos[2]],
-                           ['position', 'normale', 'color'])
+        targets_sh = sh.create('../shader/target_vert.glsl',
+                               None,
+                               '../shader/target_frag.glsl',
+                               [target_vbos[0], target_vbos[1], target_vbos[2]],
+                               ['position', 'normale', 'color'])
 
-    if not targets_sh:
-        exit(1)
-    print("Targets shader created")
+        if not targets_sh:
+            exit(1)
+        print("Targets shader created")
+    else:
+        targets_sh = None
     
     #retourne les ID des programmes shaders
     return picture_sh, pointer_sh, targets_sh #TODO return targets_sh
@@ -282,8 +285,9 @@ def new_object_position():
     projection(pi_shader, camera.persp_projection, camera.persp_modelview, m_persp_object)
 
     #TODO add gestion pivotement ta_shader
-    glUseProgram(ta_shader)
-    projection(ta_shader, camera.persp_projection, camera.persp_modelview, m_persp_object)
+    if expe:
+        glUseProgram(ta_shader)
+        projection(ta_shader, camera.persp_projection, camera.persp_modelview, m_persp_object)
 
 def init_projections(po_shader):
     
@@ -330,26 +334,26 @@ def mouse_button(button, state, x, y):
 
     #t = time
 
-    if(button == GLUT_LEFT_BUTTON and state == GLUT_DOWN):
+    # if(button == GLUT_LEFT_BUTTON and state == GLUT_DOWN):
         
-        if(overall.isInTarget(thetaCible, angleRot, amplitude, rayonCible, pdp)): #TODO passer les arguments
-            if(nbClicOnTarget == 0):
-                #TODO positionner centre env sur cible 1 (x = amplitude, y = 0, z = cible1.height)
-                    #démarrer le chrono (t1 = time)
-            elif (nbClicOnTarget < 9):
-                #TODO positionner centre env sur cible suivante (angleCible suiv = 4*2*PI/9)
-            else:
-                #TODO :
-                    #t2 = t
-                    #save (t = t1 - t2)
-                    #changer ID => repartir état initial avec nouvel ID
-                    #nbClicError = 0 & nbClicOnTarget = 0
-            nbClicOnTarget += 1
+    #     if(overall.isInTarget(thetaCible, angleRot, amplitude, rayonCible, pdp)): #TODO passer les arguments
+    #         if(nbClicOnTarget == 0):
+    #             #TODO positionner centre env sur cible 1 (x = amplitude, y = 0, z = cible1.height)
+    #                 #démarrer le chrono (t1 = time)
+    #         elif (nbClicOnTarget < 9):
+    #             #TODO positionner centre env sur cible suivante (angleCible suiv = 4*2*PI/9)
+    #         else:
+    #             #TODO :
+    #                 #t2 = t
+    #                 #save (t = t1 - t2)
+    #                 #changer ID => repartir état initial avec nouvel ID
+    #                 #nbClicError = 0 & nbClicOnTarget = 0
+    #         nbClicOnTarget += 1
 
 
-        else:
-            nbClicError += 1
-        print(nbClics)
+        # else:
+        #     nbClicError += 1
+        # print(nbClics)
 
 def keyboard(key, x, y):
 
@@ -447,17 +451,18 @@ def display():
         glDrawArrays(GL_TRIANGLES, 0, int(len(vertic_picture)/3))
 
     #TODO
-    glUseProgram(ta_shader)
-    glBindBuffer(GL_ARRAY_BUFFER, target_vbos[0])
-    glBufferData(GL_ARRAY_BUFFER, vertic_target, GL_DYNAMIC_DRAW)
+    if expe:
+        glUseProgram(ta_shader)
+        glBindBuffer(GL_ARRAY_BUFFER, target_vbos[0])
+        glBufferData(GL_ARRAY_BUFFER, vertic_target, GL_DYNAMIC_DRAW)
 
-    glBindBuffer(GL_ARRAY_BUFFER, target_vbos[1])
-    glBufferData(GL_ARRAY_BUFFER, norm_target, GL_DYNAMIC_DRAW)
+        glBindBuffer(GL_ARRAY_BUFFER, target_vbos[1])
+        glBufferData(GL_ARRAY_BUFFER, norm_target, GL_DYNAMIC_DRAW)
 
-    glBindBuffer(GL_ARRAY_BUFFER, target_vbos[2])
-    glBufferData(GL_ARRAY_BUFFER, color_target, GL_DYNAMIC_DRAW)
+        glBindBuffer(GL_ARRAY_BUFFER, target_vbos[2])
+        glBufferData(GL_ARRAY_BUFFER, color_target, GL_DYNAMIC_DRAW)
 
-    glDrawArrays(GL_TRIANGLES, 0, int(len(vertic_target)/3))
+        glDrawArrays(GL_TRIANGLES, 0, int(len(vertic_target)/3))
 
     #Intersection between the mouse ray and the scene
     if pdpE:
