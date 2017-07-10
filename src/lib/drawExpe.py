@@ -22,7 +22,8 @@ numCurrentRing = 0
 nbRingsIn = 0
 thetaTarget = 0
 
-
+def drawExpe (centerEnv, centerTarget, amplitude, width, height, nbRings, H0, nbTargets, numTarget):
+	""""""
 def drawEnv (center, amplitude, width, height, nbRings, H0):
 	"""fonction qui à partir d'un anneau donné renvoie l'image d'expe associé"""
 def drawCibles (center, amplitude, width, height, nbCibles, numCible):
@@ -89,7 +90,7 @@ def drawEnv (center, amplitude, width, height, nbRings, H0):
 	rings = []
 	Id = fittsLaw_Id(amplitude, width)
 	step = amplitude / (nbRings+1)
-	nbRingsToDraw = (nbRings + 1) + 2
+	nbRingsToDraw = (nbRings + 1) + 0
 	
 	#determiner position en x (rayon) des différents cercles, en déduire largeur et hauteur
 	i = 0
@@ -173,7 +174,7 @@ def ringAskew (center, radius1, radius2, height1, height2, nbSegments):
 		theta2 = 2 * math.pi * ((i+1)%nbSegments) / nbSegments
 		vertice2 = verticeCompute(center, theta1, radius2, height2, pos)
 		vertice1 = verticeCompute(center, theta1, radius1, height1, pos)
-		vertice3 = verticeCompute(center, theta2, radius1, height2, pos)
+		vertice3 = verticeCompute(center, theta2, radius1, height1, pos)
 
 		fullList(vertice2, vertices_tmp, 3) #l'ordre est important !
 		fullList(vertice1, vertices_tmp, 3)
