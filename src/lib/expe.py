@@ -15,7 +15,12 @@ def isInTarget(thetaCible, thetaRotation, distance, rayonCible, pdp):
 def newRadius (oldRadius):
 	"""calcule le rayon entre c1 et c5
 	Fonction uniquement valable pour ISO"""
-
+def posTarget (theta, radius):
+	""""""
+def mooveObject (tab, trans):
+	""""""
+def saveData(name, amplitude, largeur, hauteur, nbAnneaux, nbErreurClic, temps):
+	""""""
 
 
 def isInTarget(thetaCible, thetaRotation, distance, rayonCible, pdp):
@@ -63,9 +68,22 @@ def mooveObject (tab, trans):
 	tabReturn = numpy.array(tabReturn, dtype='float32')
 	return tabReturn
 
-
-
-
+def saveData(name, amplitude, largeur, hauteur, nbAnneaux, nbErreurClic, temps):
+	filePath = "../résultats/"+name+".expe"
+	id = drawExpe.fittsLaw_Id(amplitude, largeur)
+	lineToWrite = str(round(id, 3))+"\t"+str(amplitude)+"\t"+str(largeur)+"\t"+str(hauteur)+"\t"+str(nbAnneaux)+"\t"+str(nbErreurClic)+"\t"+str(round(temps, 3))+"\n"
+	
+	try:
+		dataFile = open(filePath, "a")
+		dataFile.write(lineToWrite)
+	except ValueError:
+		print()
+		print()
+		print(ValueError)
+		print()
+		overall.stopApplication()
+	dataFile.close
+	print("Result files saved")
 
 
 

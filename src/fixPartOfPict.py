@@ -25,8 +25,8 @@ pdpE = False
 
 targetOrder = [0, 4, 8, 3, 7, 2, 6, 1, 5, 0]
 
-picture_vbos, pointing_vbos, target_vbos = None, None, None #TODO add target_vbos
-pi_shader, po_shader, ta_shader = None, None, None #TODO add ta_shader
+picture_vbos, pointing_vbos, target_vbos = None, None, None
+pi_shader, po_shader, ta_shader = None, None, None
 
 vertic_picture = []
 norm_picture = []
@@ -44,6 +44,7 @@ color_target = []
 
 
 nameFile = None
+name = None
 
 mouse = numpy.array([0, 0, None, None, 0, 0])
 tech_feedback = numpy.array([])
@@ -61,6 +62,7 @@ nbAnneaux = 0
 
 nbClicError = 0
 nbClicOnTarget = 0
+t1 = 0
 
 #==============================VARIABLES REGLABLES==============================#
     #CAMERA
@@ -93,7 +95,6 @@ class Camera:
 camera = Camera(ratio = window_w/window_h, position = initPosCamera)
 
 
-
 def init_env():
     """initialise window param"""
 def init():
@@ -101,6 +102,8 @@ def init():
        -return : ID of program shaders"""
 def projection():
     """build matrix (vec4) of projection"""
+def new_object_position():
+    """"""
 def init_projections():
     """Intialise the camera and call shaders program"""
 def mouse_intersection(mouse_x, mouse_y, camera, win_w, win_h):
@@ -108,21 +111,65 @@ def mouse_intersection(mouse_x, mouse_y, camera, win_w, win_h):
     We assume the viewport bottom left corner is 0, 0'''
 def mouse_passive(x, y):
     """get the coord of mouse pointer when there are not other entry"""
+def mouse_button(button, state, x, y):
+    """"""
 def keyboard(key, x, y):
     """get the touch which are pressed"""
 def cursor_feedback(p):
     """get the mouse pointer to print it
     -return numpy.append(arr, z, axis=1)"""
-def display():
-    """Display in real time the pointer of our pad or by eye tracking"""
 def idle():
     """function called when there are no other event"""
+def display():
+    """Display in real time the pointer of our pad or by eye tracking"""
 
 
 #########################################
 #           END OF DECLARATION          #
 #########################################
 
+def createModel():
+
+    global vertic_picture, norm_picture, vertic_picture_haut, norm_picture_haut, vertic_picture_bas, norm_picture_bas
+    global vertic_target, norm_target, color_target
+
+    global amplitude, thetaCible, rayonCible, nbCibles, env_haut_bas, amplitudeCible, hauteur
+
+
+    if test:
+        #parse fichier d'entree
+        vertic_picture, norm_picture = parser.parse(nameFile, reverse) #le 2eme param sert à inverser les sommets
+        cameraZ = 10
+    elif expe:
+        #cré model
+        amplitude = 10
+        rayonCible = 1
+        nbCibles = 9
+        env_haut_bas = 0
+        hauteur = 10
+        nbAnneaux = 2
+        vertic_picture, norm_picture, cameraZ, vertic_target, norm_target = draw.drawExpe(amplitude, rayonCible, hauteur, nbAnneaux, env_haut_bas, nbCibles)
+
+        color_target, thetaCible = draw.changeTargetsColor(nbCibles, targetOrder[0])
+        
+        vertic_picture = numpy.array(vertic_picture, dtype='float32')
+        norm_picture = numpy.array(norm_picture, dtype='float32')
+
+        vertic_target = numpy.array(vertic_target, dtype='float32')
+        norm_target = numpy.array(norm_target, dtype='float32')
+        color_target = numpy.array(color_target, dtype='float32')
+
+        amplitudeCible = libExpe.newRadius(amplitude)
+
+        vertic_picture_haut, norm_picture_haut, n = draw.drawEnv(2*amplitudeCible, rayonCible, hauteur, nbAnneaux, 1)
+        vertic_picture_bas,  norm_picture_bas,  n = draw.drawEnv(2*amplitudeCible, rayonCible, hauteur, nbAnneaux, 0)
+
+        vertic_picture_haut = numpy.array(vertic_picture_haut, dtype='float32')
+        norm_picture_haut = numpy.array(norm_picture_haut, dtype='float32')
+        vertic_picture_bas = numpy.array(vertic_picture_bas, dtype='float32')
+        norm_picture_bas = numpy.array(norm_picture_bas, dtype='float32')
+
+    camera.position[2] = 70
 
 def init_env():
     global angleRot
@@ -144,52 +191,12 @@ def init_env():
     else:
         angleRot = 0.0
 
-    
     print('Environment booted')
 
 def init():
     global picture_vbos, pointing_vbos, target_vbos
-    global vertic_picture, norm_picture, vertic_picture_haut, norm_picture_haut, vertic_picture_bas, norm_picture_bas
-    global vertic_target, norm_target, color_target
-
-    global amplitude, thetaCible, rayonCible, nbCibles, env_haut_bas, amplitudeCible, hauteur
-
 
     pointer_sh_attr = [5]
-
-    if test:
-        #parse fichier d'entree
-        vertic_picture, norm_picture = parser.parse(nameFile, reverse) #le 2eme param sert à inverser les sommets
-    elif expe:
-        #cré le modèle
-        amplitude = 10
-        rayonCible = 1
-        nbCibles = 9
-        env_haut_bas = 0
-        hauteur = 10
-        nbAnneaux = 2
-        vertic_picture, norm_picture, cameraZ, vertic_target, norm_target = draw.drawExpe(amplitude, rayonCible, hauteur, nbAnneaux, env_haut_bas, nbCibles)
-
-        color_target, thetaCible = draw.changeTargetsColor(nbCibles, targetOrder[0])
-        
-        vertic_picture = numpy.array(vertic_picture, dtype='float32')
-        norm_picture = numpy.array(norm_picture, dtype='float32')
-
-        vertic_target = numpy.array(vertic_target, dtype='float32')
-        norm_target = numpy.array(norm_target, dtype='float32')
-        color_target = numpy.array(color_target, dtype='float32')
-
-        amplitudeCible = libExpe.newRadius(amplitude) #le 2*rayon entre l'origine et une cible est différent de distance entre 2 cibles
-
-        vertic_picture_haut, norm_picture_haut, n = draw.drawEnv(2*amplitudeCible, rayonCible, hauteur, nbAnneaux, 1)
-        vertic_picture_bas,  norm_picture_bas,  n = draw.drawEnv(2*amplitudeCible, rayonCible, hauteur, nbAnneaux, 0)
-
-        vertic_picture_haut = numpy.array(vertic_picture_haut, dtype='float32')
-        norm_picture_haut = numpy.array(norm_picture_haut, dtype='float32')
-        vertic_picture_bas = numpy.array(vertic_picture_bas, dtype='float32')
-        norm_picture_bas = numpy.array(norm_picture_bas, dtype='float32')
-
-        camera.position[2] = 55
 
     #creation des shaders
     try:
@@ -205,7 +212,7 @@ def init():
     
     picture_vbos = glGenBuffers(2)
     pointing_vbos = [glGenBuffers(1)]
-    target_vbos = glGenBuffers(3) #ajout glGenBuffers #TODO
+    target_vbos = glGenBuffers(3)
     
     ###picture shader###
     glBindBuffer(GL_ARRAY_BUFFER, picture_vbos[0])
@@ -244,7 +251,6 @@ def init():
     print('Pointer shader created')
 
     ###targets shader###
-    #TODO create targets shader ...
     if expe:
         glBindBuffer(GL_ARRAY_BUFFER, target_vbos[0])
         glBufferData(GL_ARRAY_BUFFER, vertic_target, GL_DYNAMIC_DRAW)
@@ -274,7 +280,7 @@ def init():
         targets_sh = None
     
     #retourne les ID des programmes shaders
-    return picture_sh, pointer_sh, targets_sh #TODO return targets_sh
+    return picture_sh, pointer_sh, targets_sh
 
 def projection(shader, matp, matm, mato):
     unif_p = glGetUniformLocation(shader, 'projection_mat')
@@ -295,20 +301,18 @@ def new_object_position():
             if angleRot >= (angle0+arcAngle/2) or angleRot <= (angle0-arcAngle/2):
                 sens = 1 - sens
 
-    m_persp_pi = matrix.pivot(axisRot, angleRot, pdp, envCenter)
-    m_persp_ta = matrix.pivot(axisRot, angleRot, pdp, [0,0,0])
+    m_persp_object = matrix.pivot(axisRot, angleRot, pdp, [0,0,0])
      
     glUseProgram(pi_shader)
-    projection(pi_shader, camera.persp_projection, camera.persp_modelview, m_persp_ta)
+    projection(pi_shader, camera.persp_projection, camera.persp_modelview, m_persp_object)
 
-    #TODO add gestion pivotement ta_shader
     if expe:
         glUseProgram(ta_shader)
-        projection(ta_shader, camera.persp_projection, camera.persp_modelview, m_persp_ta)
+        projection(ta_shader, camera.persp_projection, camera.persp_modelview, m_persp_object)
 
 def init_projections(po_shader):
     
-    camera.ortho_projection = vp.orthographic(0, window_w, 0, window_h, -1.0, 1.0).T
+    camera.ortho_projection = vp.orthographic(0, window_w, 0, window_h, -1.0, 1.0)
     camera.ortho_modelview = numpy.identity(4)
     
     camera.persp_projection  = vp.perspective(camera.fov, camera.ratio, camera.near, camera.far).T
@@ -318,12 +322,10 @@ def init_projections(po_shader):
     new_object_position()
     
     glUseProgram(po_shader)
-    projection(po_shader, camera.ortho_projection, camera.ortho_modelview, None)
+    projection(po_shader, camera.ortho_projection.T, camera.ortho_modelview, None)
 
 
 def mouse_intersection(mouse_x, mouse_y, camera, win_w, win_h):
-    '''Computation of the intersection between the mouse ray and the scene
-    We assume the viewport bottom left corner is 0, 0'''
 
     z = glReadPixels( mouse_x, mouse_y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT)[0][0];
     if z > 0.999:
@@ -347,15 +349,16 @@ def mouse_passive(x, y):
     glutPostRedisplay()
 
 def mouse_button(button, state, x, y):
-    global nbClicError, nbClicOnTarget, color_target, envCenter, env_haut_bas, thetaCible, vertic_picture, norm_picture
+    global nbClicError, nbClicOnTarget, t1
+    global color_target, vertic_picture, norm_picture, envCenter, env_haut_bas, thetaCible
 
-    t = time
+    t = time.time()
 
     if(button == GLUT_LEFT_BUTTON and state == GLUT_DOWN):        
         if(libExpe.isInTarget(thetaCible, angleRot, amplitude, rayonCible, pdp)):
             nbClicOnTarget += 1
             if(nbClicOnTarget == 1):
-                #démarrer le chrono (t1 = time)
+                t1 = time.time()
                 x, y = libExpe.posTarget(thetaCible, amplitude)
                 color_target, thetaCible = draw.changeTargetsColor(nbCibles, targetOrder[nbClicOnTarget])
                 envCenter = [x, y, 0]
@@ -383,11 +386,11 @@ def mouse_button(button, state, x, y):
                         norm_picture = norm_picture_haut
                         
             else:
-                # TODO :
-                #     save (t = t1 - t)
-                #     changer ID => repartir état initial avec nouvel ID
-                #     nbClicError = 0 & nbClicOnTarget = 0
-                print("FIN !", nbClicError)
+                duree = t - t1
+                # changer ID => repartir état initial avec nouvel ID
+                # nbClicError = 0 & nbClicOnTarget = 0
+                libExpe.saveData(name, amplitude, rayonCible, hauteur, nbAnneaux, nbClicError, duree)
+                print("FIN !")
 
             color_target = numpy.array(color_target, dtype='float32')
         
@@ -413,28 +416,29 @@ def keyboard(key, x, y):
     else:
         print("Useless key:", key)
 
-def cursor_feedback(p):
+def cursor_feedback(p_mouse):
     left    = numpy.array([1,0])
     up      = numpy.array([0,1])
-    r = 5
+    r_mouse = 5
     arr = []
     
     nb_steps = 20
     step = 2*math.pi/nb_steps
     for i in range(nb_steps):
-        arr.append(p)
-        arr.append(p + r*math.cos((i+1)*step)*left + r*math.sin((i+1)*step)*up)
-        arr.append(p + r*math.cos(i*step)*left + r*math.sin(i*step)*up)
+        arr.append(p_mouse)
+        arr.append(p_mouse + r_mouse*math.cos((i+1)*step)*left + r_mouse*math.sin((i+1)*step)*up)
+        arr.append(p_mouse + r_mouse*math.cos(i*step)*left + r_mouse*math.sin(i*step)*up)
     
-    z = numpy.zeros((len(arr),1), dtype='float32')
-    return numpy.append(arr, z, axis=1)
+    z_mouse = numpy.zeros((len(arr),1), dtype='float32')
+    return numpy.append(arr, z_mouse, axis=1)
 
 def idle():
     glutPostRedisplay()
 
 def main():
     print('====> START')
-    global pi_shader, po_shader, ta_shader, nameFile, reverse, test, expe, pdpE #TODO add ta_shader
+    global pi_shader, po_shader, ta_shader
+    global nameFile, reverse, test, expe, pdpE, name
     
     glutInit(sys.argv)
     #on récupère les paramètres passé
@@ -453,11 +457,12 @@ def main():
         pdpE = bool(int((sys.argv[3])))
 
     elif sys.argv[1] == "expe":
-        if len(sys.argv) < 3:
+        if len(sys.argv) < 4:
             print("Nombre d'argument incorrect")
             overall.stopApplication()
         expe = True
         pdpE = bool(int(sys.argv[2]))
+        name = sys.argv[3]
         print("Début expérimentation ...")
 
     if not test and not expe:
@@ -467,7 +472,8 @@ def main():
 
     init_env()
     
-    pi_shader, po_shader, ta_shader = init() #TODO add ta_shader
+    createModel()
+    pi_shader, po_shader, ta_shader = init()
     
     init_projections(po_shader)
     
@@ -489,13 +495,12 @@ def display():
     
     #display object at screen
     glUseProgram(pi_shader)
-    ##technique de d'affichage des triangles différentes
+    #technique de d'affichage des triangles différentes
     if expe:
         glDrawArrays(GL_TRIANGLE_STRIP, 0, int(len(vertic_picture)/3))
     elif test:
         glDrawArrays(GL_TRIANGLES, 0, int(len(vertic_picture)/3))
 
-    #TODO
     if expe:
         glUseProgram(ta_shader)
         glDrawArrays(GL_TRIANGLES, 0, int(len(vertic_target)/3))
@@ -512,7 +517,9 @@ def display():
     tech_feedback = cursor_feedback(mouse[:2])
 
     glUseProgram(po_shader)
-    glDrawArrays(GL_TRIANGLES, 0, int(len(tech_feedback)/3))
+    glBindBuffer(GL_ARRAY_BUFFER, pointing_vbos[0])
+    glBufferData(GL_ARRAY_BUFFER, tech_feedback.astype('float32'), GL_DYNAMIC_DRAW)
+    glDrawArrays(GL_TRIANGLES, 0, len(tech_feedback))
 
     glutSwapBuffers()
 
