@@ -50,6 +50,7 @@ tech_feedback = numpy.array([])
 angleRot = 0.0
 thetaCible = 0.0
 amplitude = 0 #rayon entre l'origine et une cible quelconque
+amplitudeCible = 0 #rayon entre 2 cible consécutive pour ordre passage ISO
 rayonCible = 0
 nbCibles = 0
 envCenter = [0,0,0]
@@ -59,7 +60,6 @@ nbAnneaux = 0
 
 nbClicError = 0
 nbClicOnTarget = 0
-
 
 #==============================VARIABLES REGLABLES==============================#
     #CAMERA
@@ -133,7 +133,7 @@ def init_env():
     glutCreateWindow('myFirstWindow')
     glClearColor(1.0, 1.0, 1.0, 1.0)
     glEnable(GL_DEPTH_TEST)
-    glEnable(GL_CULL_FACE)
+    #glEnable(GL_CULL_FACE)
     glFrontFace(GL_CW)
     glDepthFunc(GL_LESS)
     #glutSetCursor(GLUT_CURSOR_NONE)
@@ -151,7 +151,7 @@ def init():
     global vertic_picture, norm_picture, vertic_picture_haut, norm_picture_haut, vertic_picture_bas, norm_picture_bas
     global vertic_target, norm_target, color_target
 
-    global amplitude, thetaCible, rayonCible, nbCibles, env_haut_bas, amplitudeBis, hauteur
+    global amplitude, thetaCible, rayonCible, nbCibles, env_haut_bas, amplitudeCible, hauteur
 
 
     pointer_sh_attr = [5]
@@ -178,16 +178,15 @@ def init():
         norm_target = numpy.array(norm_target, dtype='float32')
         color_target = numpy.array(color_target, dtype='float32')
 
-        amplitude = libExpe.newRadius(amplitude) #le 2*rayon entre l'origine et une cible est différent de distance entre 2 cibles
+        amplitudeCible = libExpe.newRadius(amplitude) #le 2*rayon entre l'origine et une cible est différent de distance entre 2 cibles
 
-        vertic_picture_haut, norm_picture_haut, n = draw.drawEnv(amplitude, rayonCible, hauteur, nbAnneaux, 1)
-        vertic_picture_bas,  norm_picture_bas,  n = draw.drawEnv(amplitude, rayonCible, hauteur, nbAnneaux, 0)
+        vertic_picture_haut, norm_picture_haut, n = draw.drawEnv(2*amplitudeCible, rayonCible, hauteur, nbAnneaux, 1)
+        vertic_picture_bas,  norm_picture_bas,  n = draw.drawEnv(2*amplitudeCible, rayonCible, hauteur, nbAnneaux, 0)
 
         vertic_picture_haut = numpy.array(vertic_picture_haut, dtype='float32')
         norm_picture_haut = numpy.array(norm_picture_haut, dtype='float32')
         vertic_picture_bas = numpy.array(vertic_picture_bas, dtype='float32')
         norm_picture_bas = numpy.array(norm_picture_bas, dtype='float32')
-
 
         camera.position[2] = 55
 
@@ -300,7 +299,7 @@ def new_object_position():
     m_persp_ta = matrix.pivot(axisRot, angleRot, pdp, [0,0,0])
      
     glUseProgram(pi_shader)
-    projection(pi_shader, camera.persp_projection, camera.persp_modelview, m_persp_pi)
+    projection(pi_shader, camera.persp_projection, camera.persp_modelview, m_persp_ta)
 
     #TODO add gestion pivotement ta_shader
     if expe:
@@ -352,38 +351,37 @@ def mouse_button(button, state, x, y):
 
     t = time
 
-    if(button == GLUT_LEFT_BUTTON and state == GLUT_DOWN):
-        print(thetaCible)
-        
+    if(button == GLUT_LEFT_BUTTON and state == GLUT_DOWN):        
         if(libExpe.isInTarget(thetaCible, angleRot, amplitude, rayonCible, pdp)):
-            if(nbClicOnTarget == 0):
-                #TODO positionner centre env sur cible 1 (x = amplitude, y = 0, z = cible1.height) ET avec le nouveau rayon
-                    #démarrer le chrono (t1 = time)
+            nbClicOnTarget += 1
+            if(nbClicOnTarget == 1):
+                #démarrer le chrono (t1 = time)
                 x, y = libExpe.posTarget(thetaCible, amplitude)
-                color_target, thetaCible = draw.changeTargetsColor(nbCibles, targetOrder[nbClicOnTarget+1])
+                color_target, thetaCible = draw.changeTargetsColor(nbCibles, targetOrder[nbClicOnTarget])
                 envCenter = [x, y, 0]
-                #TODO vertic_picture for glBindBuffer and glBufferData = vertic_picture de env_haut_bas
+
+                env_haut_bas = 1 - env_haut_bas
                 if env_haut_bas == 0:
                     vertic_picture = vertic_picture_bas
+                    norm_picture = norm_picture_bas
                 else:
                     vertic_picture = vertic_picture_haut
-                env_haut_bas = 1 - env_haut_bas
-                norm_picture = norm_picture_bas
+                    norm_picture = norm_picture_haut
 
-                glBindBuffer(GL_ARRAY_BUFFER, picture_vbos[1])
-                glBufferData(GL_ARRAY_BUFFER, norm_picture, GL_DYNAMIC_DRAW)
-
-            elif (nbClicOnTarget < 9):
-                x, y = libExpe.posTarget(thetaCible, amplitude)
-                color_target, thetaCible = draw.changeTargetsColor(nbCibles, targetOrder[nbClicOnTarget+1])
+            elif (nbClicOnTarget < 10):
+                x, y = libExpe.posTarget(thetaCible, amplitudeCible)
+                color_target, thetaCible = draw.changeTargetsColor(nbCibles, targetOrder[nbClicOnTarget])
                 envCenter = [x, y, 0]
-                #TODO vertic_picture for glBindBuffer and glBufferData = vertic_picture de env_haut_bas
-                if nbClicOnTarget != 7:
+                
+                if nbClicOnTarget != 5:
+                    env_haut_bas = 1 - env_haut_bas
                     if env_haut_bas == 0:
                         vertic_picture = vertic_picture_bas
+                        norm_picture = norm_picture_bas
                     else:
                         vertic_picture = vertic_picture_haut
-                env_haut_bas = 1 - env_haut_bas
+                        norm_picture = norm_picture_haut
+                        
             else:
                 # TODO :
                 #     save (t = t1 - t)
@@ -398,9 +396,11 @@ def mouse_button(button, state, x, y):
             glBufferData(GL_ARRAY_BUFFER, color_target, GL_DYNAMIC_DRAW)
 
             glBindBuffer(GL_ARRAY_BUFFER, picture_vbos[0])
-            glBufferData(GL_ARRAY_BUFFER, vertic_picture, GL_DYNAMIC_DRAW)            
+            glBufferData(GL_ARRAY_BUFFER, libExpe.mooveObject(vertic_picture, envCenter), GL_DYNAMIC_DRAW)
 
-            nbClicOnTarget += 1
+
+            glBindBuffer(GL_ARRAY_BUFFER, picture_vbos[1])
+            glBufferData(GL_ARRAY_BUFFER, norm_picture, GL_DYNAMIC_DRAW)
 
         else:
             nbClicError += 1
