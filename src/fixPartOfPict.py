@@ -51,7 +51,7 @@ tech_feedback = numpy.array([])
 
 angleRot = 0.0
 thetaCible = 0.0
-amplitude = 0 #rayon entre l'origine et une cible quelconque
+amplitudeInit = 0 #rayon entre l'origine et une cible quelconque
 amplitudeCible = 0 #rayon entre 2 cible consécutive pour ordre passage ISO
 rayonCible = 0
 nbCibles = 0
@@ -133,7 +133,7 @@ def createModel():
     global vertic_picture, norm_picture, vertic_picture_haut, norm_picture_haut, vertic_picture_bas, norm_picture_bas
     global vertic_target, norm_target, color_target
 
-    global amplitude, thetaCible, rayonCible, nbCibles, env_haut_bas, amplitudeCible, hauteur
+    global amplitudeInit, thetaCible, rayonCible, nbCibles, env_haut_bas, amplitudeCible, hauteur
 
 
     if test:
@@ -142,13 +142,14 @@ def createModel():
         cameraZ = 10
     elif expe:
         #cré model
-        amplitude = 10
+        amplitudeCible = 6
+        amplitudeInit = libExpe.radius_TargetToInit(amplitudeCible)
         rayonCible = 1
         nbCibles = 9
         env_haut_bas = 0
         hauteur = 10
         nbAnneaux = 2
-        vertic_picture, norm_picture, cameraZ, vertic_target, norm_target = draw.drawExpe(amplitude, rayonCible, hauteur, nbAnneaux, env_haut_bas, nbCibles)
+        vertic_picture, norm_picture, cameraZ, vertic_target, norm_target = draw.drawExpe(amplitudeInit, rayonCible, hauteur, nbAnneaux, env_haut_bas, nbCibles)
 
         color_target, thetaCible = draw.changeTargetsColor(nbCibles, targetOrder[0])
         
@@ -159,8 +160,6 @@ def createModel():
         norm_target = numpy.array(norm_target, dtype='float32')
         color_target = numpy.array(color_target, dtype='float32')
 
-        amplitudeCible = libExpe.newRadius(amplitude)
-
         vertic_picture_haut, norm_picture_haut, n = draw.drawEnv(2*amplitudeCible, rayonCible, hauteur, nbAnneaux, 1)
         vertic_picture_bas,  norm_picture_bas,  n = draw.drawEnv(2*amplitudeCible, rayonCible, hauteur, nbAnneaux, 0)
 
@@ -168,8 +167,7 @@ def createModel():
         norm_picture_haut = numpy.array(norm_picture_haut, dtype='float32')
         vertic_picture_bas = numpy.array(vertic_picture_bas, dtype='float32')
         norm_picture_bas = numpy.array(norm_picture_bas, dtype='float32')
-
-    camera.position[2] = 70
+    camera.position[2] = cameraZ * 3
 
 def init_env():
     global angleRot
@@ -355,11 +353,11 @@ def mouse_button(button, state, x, y):
     t = time.time()
 
     if(button == GLUT_LEFT_BUTTON and state == GLUT_DOWN):        
-        if(libExpe.isInTarget(thetaCible, angleRot, amplitude, rayonCible, pdp)):
+        if(libExpe.isInTarget(thetaCible, angleRot, amplitudeInit, rayonCible, pdp)):
             nbClicOnTarget += 1
             if(nbClicOnTarget == 1):
                 t1 = time.time()
-                x, y = libExpe.posTarget(thetaCible, amplitude)
+                x, y = libExpe.posTarget(thetaCible, amplitudeInit)
                 color_target, thetaCible = draw.changeTargetsColor(nbCibles, targetOrder[nbClicOnTarget])
                 envCenter = [x, y, 0]
 
@@ -389,7 +387,7 @@ def mouse_button(button, state, x, y):
                 duree = t - t1
                 # changer ID => repartir état initial avec nouvel ID
                 # nbClicError = 0 & nbClicOnTarget = 0
-                libExpe.saveData(name, amplitude, rayonCible, hauteur, nbAnneaux, nbClicError, duree)
+                libExpe.saveData(name, amplitudeCible, rayonCible, hauteur, nbAnneaux, nbClicError, duree)
                 print("FIN !")
 
             color_target = numpy.array(color_target, dtype='float32')

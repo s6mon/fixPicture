@@ -2,6 +2,7 @@
 import sys
 import math
 import numpy
+import datetime
 
 from . import drawExpe
 
@@ -12,7 +13,7 @@ nbTargets = 9
 
 def isInTarget(thetaCible, thetaRotation, distance, rayonCible, pdp):
 	"""True ou False selon si x y est dans la cible"""
-def newRadius (oldRadius):
+def radius_InitToTarget (radius):
 	"""calcule le rayon entre c1 et c5
 	Fonction uniquement valable pour ISO"""
 def posTarget (theta, radius):
@@ -43,12 +44,16 @@ def isInTarget(thetaCible, thetaRotation, distance, rayonCible, pdp):
 		return False
 
 #!!! fonction valable dans un contexte ISO (pour 9 cibles)
-def newRadius (oldRadius):
+#prend le rayon à l'état initial et renvoie le rayon entre deux cibles
+def radius_InitToTarget (radius):
 	theta = 8*math.pi / 9
-	A = (abs(math.cos(theta)) * oldRadius) + oldRadius
-	B = math.sin(theta) * oldRadius
+	A = (abs(math.cos(theta)) * radius) + radius
+	B = math.sin(theta) * radius
 	C = math.sqrt(A*A + B*B)
 	return C / 2
+
+def radius_TargetToInit (radius):
+	return radius * (1/radius_InitToTarget(1))
 
 def posTarget (theta, radius):
 	return math.cos(theta)*radius, math.sin(theta)*radius
@@ -69,10 +74,23 @@ def mooveObject (tab, trans):
 	return tabReturn
 
 def saveData(name, amplitude, largeur, hauteur, nbAnneaux, nbErreurClic, temps):
-	filePath = "../résultats/"+name+".expe"
+	filePath = "../resultats/"+name+".expe"
 	id = drawExpe.fittsLaw_Id(amplitude, largeur)
-	lineToWrite = str(round(id, 3))+"\t"+str(amplitude)+"\t"+str(largeur)+"\t"+str(hauteur)+"\t"+str(nbAnneaux)+"\t"+str(nbErreurClic)+"\t"+str(round(temps, 3))+"\n"
-	
+	now = datetime.datetime.now()
+	date = now.strftime("%Y-%m-%d %H:%M:%S")
+	lineToWrite = date+"\t"+str(round(id, 3))+"\t"+str(amplitude)+"\t\t"+str(largeur)+"\t\t"+str(hauteur)+"\t\t"+str(nbAnneaux)+"\t\t"+str(nbErreurClic)+"\t\t"+str(round(temps, 3))+"\n"
+	try:
+		dataFile = open(filePath, "r")
+	except ValueError:
+		print()
+		print()
+		print(ValueError)
+		print()
+	except:
+		firstLine = ("Date :\t\t\tId:\tAmplitude\tLargeur:\tHauteur:\tNbAnneaux:\tNbErreurClic:\tTemps:\n")
+		dataFile = open(filePath, "a")
+		dataFile.write(firstLine)
+	dataFile.close()
 	try:
 		dataFile = open(filePath, "a")
 		dataFile.write(lineToWrite)
