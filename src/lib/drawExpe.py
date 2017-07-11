@@ -30,7 +30,7 @@ def drawExpe (amplitude, width, height, nbRings, H0, nbTargets):
 def drawEnv (amplitude, width, height, nbRings, H0):
 	"""fonction qui à partir d'un anneau donné renvoie l'image d'expe associé
 	H0 = 0 ou 1"""
-def drawCibles (amplitude, width, height, nbCibles, numCible, H0):
+def drawCibles (amplitude, width, height, nbCibles, H0):
 	""""""
 def ring (radius1, radius2, height, nbSegments):
 	"""calcule les sommets de triangles pour faire des anneaux"""
@@ -40,9 +40,7 @@ def circle (position, radius, nbSegments):
 	""""""
 def changeTargetsColor (nbCibles, numCible):
 	""""""
-def fullList(objectList, maList):
-	""""""
-def fullMainList(mainTab, tmp):
+def fullList(objectList, maList, n):
 	""""""
 def v_sub (v1, v2):
 	""""""
@@ -96,7 +94,7 @@ def drawEnv (amplitude, width, height, nbRings, H0):
 	rings = []
 	Id = fittsLaw_Id(amplitude, width)
 	step = amplitude / (nbRings+1)
-	nbRingsToDraw = (nbRings + 1) + 0
+	nbRingsToDraw = (nbRings + 1) + 2
 	
 	#determiner position en x (rayon) des différents cercles, en déduire largeur et hauteur
 	i = 0
@@ -231,13 +229,6 @@ def fullList(objectList, maList, n):
 		xList.append(objectList[0])
 		yList.append(objectList[1])
 		zList.append(objectList[2])
-	
-
-def fullMainList(mainTab, tmp):
-	i = 0
-	while(i < len(tmp)):
-		mainTab.append(tmp[i])
-		i += 1
 
 def v_sub (v1, v2):
 	return [v2[0] - v1[0], v2[1] - v1[1], v2[2] - v1[2]]
@@ -255,11 +246,11 @@ def normaleCompute(v1, v2, v3):
 
 #return Id
 def fittsLaw_Id (A, W):
-	return math.log2((W/A) + 1)
+	return math.log2((A/W) + 1)
 
 #return W
 def fittsLaw_W (Id, A):
-	return (math.pow(2, Id) - 1) * A
+	return A  / (math.pow(2, Id) - 1)
 
 #return height
 def law_H (A, a, H):
@@ -279,7 +270,6 @@ def maxAxis():
 		return drawWidth
 	else:
 		return drawHeight
-
 
 def showRings(rings):
 	i = 0
