@@ -144,7 +144,10 @@ def drawCibles (amplitude, width, height, nbCibles, H0):
 		theta = i * deltaAngle 
 		x = math.cos(theta) * amplitude
 		y = math.sin(theta) * amplitude
-		z = (height * H0) + CONST_RISE_RING 
+		if i > 2 and i < 7:
+			z = (height * 1 - H0) + CONST_RISE_RING 
+		else:
+			z = (height * H0) + CONST_RISE_RING
 		circle ([x, y, z], width, NB_TRIANGLES_TARGETS)
 		i += 1
 
