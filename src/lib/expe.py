@@ -24,11 +24,16 @@ def saveData(name, amplitude, largeur, hauteur, nbAnneaux, nbErreurClic, temps):
 	""""""
 
 
+<<<<<<< HEAD
 def isInTarget(thetaCible, thetaRotation, distance, rayonCible, mouse):
+=======
+def isInTarget(thetaCible, thetaRotation, distance, rayonCible, pdp):
+>>>>>>> 4190de08ba90299b7fad440a75651e4e1613ce0a
 
 	newD = math.cos(thetaRotation) * distance
 	xCenter = math.cos(thetaCible) * newD
 	yCenter = math.sin(thetaCible) * newD
+<<<<<<< HEAD
 	xClic = mouse[0]
 	yClic = mouse[1]
 
@@ -49,6 +54,18 @@ def isAtCenter(rayonCible, mouse):
 	yClic = mouse[1]
 	if xClic >= -(rayonCible/2) and xClic <= rayonCible/2 and \
 	   yClic >= -(rayonCible/2) and yClic <= rayonCible/2:
+=======
+	xClic = pdp[0]
+	yClic = pdp[1]
+
+	# print("Mouse :", xClic, yClic)
+	# print("Target (x):", xCenter-(rayonCible/2), xCenter+(rayonCible/2))
+	# print("Target (y):", yCenter-(rayonCible/2), yCenter+(rayonCible/2))
+
+
+	if xClic >= xCenter - (rayonCible/2) and xClic <= xCenter + (rayonCible/2) and \
+	   yClic >= yCenter - (rayonCible/2) and yClic <= yCenter + (rayonCible/2):
+>>>>>>> 4190de08ba90299b7fad440a75651e4e1613ce0a
 	   	return True
 	else:
 		return False
@@ -65,6 +82,7 @@ def radius_InitToTarget (radius):
 def radius_TargetToInit (radius):
 	return radius * (1/radius_InitToTarget(1))
 
+<<<<<<< HEAD
 #commes les cibles ne sont pas en face la distance entre elle ne vaut pas le rayon sur lequel elle sont
 def newRadius(radius):
 	return math.cos(math.pi - (8*math.pi/9)) * radius
@@ -74,6 +92,11 @@ def posTarget (theta, radius):
 
 def thetaTarget(numTarget):
 	return numTarget * 2 * math.pi / 9
+=======
+def posTarget (theta, radius):
+	return math.cos(theta)*radius, math.sin(theta)*radius
+
+>>>>>>> 4190de08ba90299b7fad440a75651e4e1613ce0a
 
 
 def mooveObject (tab, trans):
@@ -84,7 +107,12 @@ def mooveObject (tab, trans):
 		tabReturn.append(tab[i+1] + trans[1])
 		tabReturn.append(tab[i+2] + trans[2])
 		i += 3
+<<<<<<< HEAD
 	
+=======
+	# print("middle(x) :",(tab[0]+tab[12])/2)
+	# print("middle(y) :",(tab[7]+tab[19])/2)
+>>>>>>> 4190de08ba90299b7fad440a75651e4e1613ce0a
 	tabReturn = numpy.array(tabReturn, dtype='float32')
 	return tabReturn
 

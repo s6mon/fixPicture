@@ -10,7 +10,11 @@ uniform vec3 light;
 
 out float color_factor;
 
+<<<<<<< HEAD
 const vec3 oldLight = vec3(0, -18, 40);
+=======
+const vec3 light = vec3(0, -18, 40);
+>>>>>>> 4190de08ba90299b7fad440a75651e4e1613ce0a
 
 vec3 l;
 in vec3 position;

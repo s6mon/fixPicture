@@ -31,6 +31,7 @@ targetOrder = [0, 4, 8, 3, 7, 2, 6, 1, 5, 0]
 picture_vbos, pointing_vbos, target_vbos = None, None, None
 pi_shader, po_shader, ta_shader = None, None, None
 
+<<<<<<< HEAD
 vertic_picture = []
 norm_picture = []
 
@@ -39,6 +40,25 @@ norm_picture_down = []
 
 vertic_picture_up = []
 norm_picture_up = []
+=======
+test = False
+expe = False
+pdpE = False
+
+targetOrder = [0, 4, 8, 3, 7, 2, 6, 1, 5, 0]
+
+picture_vbos, pointing_vbos, target_vbos = None, None, None
+pi_shader, po_shader, ta_shader = None, None, None
+
+vertic_picture = []
+norm_picture = []
+
+vertic_picture_bas = []
+norm_picture_bas = []
+
+vertic_picture_haut = []
+norm_picture_haut = []
+>>>>>>> 4190de08ba90299b7fad440a75651e4e1613ce0a
 
 vertic_target = []
 norm_target = []
@@ -54,6 +74,10 @@ tech_feedback = numpy.array([])
 
 angleRot = 0.0
 thetaCible = 0.0
+<<<<<<< HEAD
+=======
+amplitudeInit = 0 #rayon entre l'origine et une cible quelconque
+>>>>>>> 4190de08ba90299b7fad440a75651e4e1613ce0a
 amplitudeCible = 0 #rayon entre 2 cible consécutive pour ordre passage ISO
 rayonCible = 0
 nbCibles = 0
@@ -61,7 +85,10 @@ envCenter = [0,0,0]
 env_haut_bas = 0
 hauteur = 0
 nbAnneaux = 0
+<<<<<<< HEAD
 symetrieCible = 0 #-1 pour gauche (en haut) OU 1 pour droite (en haut)
+=======
+>>>>>>> 4190de08ba90299b7fad440a75651e4e1613ce0a
 
 nbClicError = 0
 nbClicOnTarget = 0
@@ -71,10 +98,16 @@ t1 = 0
     #CAMERA
 axisRot = [0, 1, 0] #Défini l'axe autour du quel on fait la rotation
 angle0 = 0 #le centre de l'arc de cercle de la rotation | -1 pour tourner continu
+<<<<<<< HEAD
 arcAngle = math.pi #la valeur de l'arc de cercle
 speed = 1 # 1 => vitesse = pi/1000
 pdp = [0., 0., 0.] #point de pivot initial ou fixe selon la technique
 pdpClic = [0., 0., 0.]
+=======
+arcAngle = math.pi / 6 #la valeur de l'arc de cercle
+speed = 1 # 1 => vitesse = pi/1000
+pdp = [0., 0., 0.] #point de pivot initial ou fixe selon la technique
+>>>>>>> 4190de08ba90299b7fad440a75651e4e1613ce0a
 sens = 1 #sens de rotation initial ou continu si angle0 = -1
 initPosCamera = [0, 0, 4] #position initiale de la camera
     #FENETRE
@@ -97,6 +130,10 @@ class Camera:
         self.up = up
 
 camera = Camera(ratio = window_w/window_h, position = initPosCamera)
+<<<<<<< HEAD
+=======
+
+>>>>>>> 4190de08ba90299b7fad440a75651e4e1613ce0a
 
 def createModel():
     """"""
@@ -137,10 +174,17 @@ def display():
 
 def createModel():
 
+<<<<<<< HEAD
     global vertic_picture, norm_picture, vertic_picture_up, norm_picture_up, vertic_picture_down, norm_picture_down
     global vertic_target, norm_target, color_target
 
     global thetaCible, rayonCible, nbCibles, env_haut_bas, amplitudeCible, hauteur, nbAnneaux, symetrieCible
+=======
+    global vertic_picture, norm_picture, vertic_picture_haut, norm_picture_haut, vertic_picture_bas, norm_picture_bas
+    global vertic_target, norm_target, color_target
+
+    global amplitudeInit, thetaCible, rayonCible, nbCibles, env_haut_bas, amplitudeCible, hauteur
+>>>>>>> 4190de08ba90299b7fad440a75651e4e1613ce0a
 
 
     if test:
@@ -149,6 +193,7 @@ def createModel():
         cameraZ = 10
     elif expe:
         #cré model
+<<<<<<< HEAD
         amplitudeCible = 20
         rayonCible = 2
         nbCibles = 9
@@ -165,11 +210,27 @@ def createModel():
 
         vertic_target, norm_target = draw.drawCibles(amplitudeCible, rayonCible, hauteur, nbCibles, symetrieCible)
         color_target = draw.initTargetsColor(nbCibles)
+=======
+        amplitudeCible = 6
+        amplitudeInit = libExpe.radius_TargetToInit(amplitudeCible)
+        rayonCible = 1
+        nbCibles = 9
+        env_haut_bas = 0
+        hauteur = 10
+        nbAnneaux = 2
+        vertic_picture, norm_picture, cameraZ, vertic_target, norm_target = draw.drawExpe(amplitudeInit, rayonCible, hauteur, nbAnneaux, env_haut_bas, nbCibles)
+
+        color_target, thetaCible = draw.changeTargetsColor(nbCibles, targetOrder[0])
+        
+        vertic_picture = numpy.array(vertic_picture, dtype='float32')
+        norm_picture = numpy.array(norm_picture, dtype='float32')
+>>>>>>> 4190de08ba90299b7fad440a75651e4e1613ce0a
 
         vertic_target = numpy.array(vertic_target, dtype='float32')
         norm_target = numpy.array(norm_target, dtype='float32')
         color_target = numpy.array(color_target, dtype='float32')
 
+<<<<<<< HEAD
         amplitudeEnv = libExpe.newRadius(amplitudeCible) + rayonCible/2
         vertic_picture_up,    norm_picture_up,    cameraZ = draw.drawEnv(2*amplitudeEnv, rayonCible*2, hauteur, nbAnneaux, 1)
         vertic_picture_down,  norm_picture_down,  cameraZ = draw.drawEnv(2*amplitudeEnv, rayonCible*2, hauteur, nbAnneaux, 0)
@@ -202,6 +263,16 @@ def initLight(shaderArray, lightVec):
         unif_light = glGetUniformLocation(shader, 'light')
         glUniform3fv(unif_light, 1, lightVec)
 
+=======
+        vertic_picture_haut, norm_picture_haut, n = draw.drawEnv(2*amplitudeCible, rayonCible, hauteur, nbAnneaux, 1)
+        vertic_picture_bas,  norm_picture_bas,  n = draw.drawEnv(2*amplitudeCible, rayonCible, hauteur, nbAnneaux, 0)
+
+        vertic_picture_haut = numpy.array(vertic_picture_haut, dtype='float32')
+        norm_picture_haut = numpy.array(norm_picture_haut, dtype='float32')
+        vertic_picture_bas = numpy.array(vertic_picture_bas, dtype='float32')
+        norm_picture_bas = numpy.array(norm_picture_bas, dtype='float32')
+    camera.position[2] = cameraZ * 3
+>>>>>>> 4190de08ba90299b7fad440a75651e4e1613ce0a
 
 def init_env():
     global angleRot
@@ -214,9 +285,12 @@ def init_env():
     glClearColor(1.0, 1.0, 1.0, 1.0)
     glEnable(GL_DEPTH_TEST)
     #glEnable(GL_CULL_FACE)
+<<<<<<< HEAD
     glEnable (GL_BLEND)
     glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
+=======
+>>>>>>> 4190de08ba90299b7fad440a75651e4e1613ce0a
     glFrontFace(GL_CW)
     glDepthFunc(GL_LESS)
     #glutSetCursor(GLUT_CURSOR_NONE)
@@ -299,7 +373,11 @@ def init():
 
         glBindBuffer(GL_ARRAY_BUFFER, target_vbos[2])
         glBufferData(GL_ARRAY_BUFFER, color_target, GL_DYNAMIC_DRAW)
+<<<<<<< HEAD
         glVertexAttribPointer(target_vbos[2], 4, GL_FLOAT, GL_FALSE, 0, None)
+=======
+        glVertexAttribPointer(target_vbos[2], 3, GL_FLOAT, GL_FALSE, 0, None)
+>>>>>>> 4190de08ba90299b7fad440a75651e4e1613ce0a
         glEnableVertexAttribArray(target_vbos[2])
 
         targets_sh = sh.create('../shader/target_vert.glsl',
@@ -328,6 +406,7 @@ def projection(shader, matp, matm, mato):
     glUniformMatrix4fv(unif_o, 1, False, mato)
 
 def new_object_position():
+<<<<<<< HEAD
     global sens, angleRot
 
     if speed != 0:
@@ -336,6 +415,17 @@ def new_object_position():
             if angleRot >= (angle0+arcAngle/2) or angleRot <= (angle0-arcAngle/2):
                 sens = 1 - sens
 
+=======
+
+    global sens, angleRot
+
+    if speed != 0:
+        angleRot = angleRot + (speed * math.pi/1000 * (sens-0.5)*2)
+        if angle0 != -1:
+            if angleRot >= (angle0+arcAngle/2) or angleRot <= (angle0-arcAngle/2):
+                sens = 1 - sens
+
+>>>>>>> 4190de08ba90299b7fad440a75651e4e1613ce0a
     m_persp_object = matrix.pivot(axisRot, angleRot, pdp, [0,0,0])
      
     glUseProgram(pi_shader)
@@ -361,6 +451,7 @@ def init_projections(po_shader):
 
 
 def mouse_intersection(mouse_x, mouse_y, camera, win_w, win_h):
+<<<<<<< HEAD
 
     z = glReadPixels( mouse_x, mouse_y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT)[0][0];
     if z > 0.999:
@@ -375,6 +466,22 @@ def mouse_intersection(mouse_x, mouse_y, camera, win_w, win_h):
     vector = numpy.array([2*(mouse_x - viewport[0])/viewport[2] - 1, 2*(mouse_y - viewport[1])/viewport[3] - 1, 2*winZ-1, 1])
     p = numpy.matmul(i,vector)
     return p[0:3]/p[3]
+=======
+    
+    z = glReadPixels( mouse_x, mouse_y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT)[0][0];
+    if z > 0.999:
+        return [0, 0, 0]
+    
+    modelview   = camera.persp_modelview.reshape((4,4))
+    projection  = camera.persp_projection
+    viewport    = [0, 0, win_w, win_h];
+    
+    winX = mouse_x;
+    winY = mouse_y;
+    winZ = glReadPixels( mouse_x, mouse_y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT);
+    
+    return gluUnProject( winX, winY, winZ, modelview, projection, viewport)
+>>>>>>> 4190de08ba90299b7fad440a75651e4e1613ce0a
 
 def mouse_passive(x, y):
     global mouse
@@ -385,6 +492,7 @@ def mouse_passive(x, y):
 
 def mouse_button(button, state, x, y):
     global nbClicError, nbClicOnTarget, t1
+<<<<<<< HEAD
     global color_target, vertic_picture, norm_picture, envCenter, env_haut_bas, thetaCible, start
 
     t = time.time()
@@ -446,6 +554,65 @@ def mouse_button(button, state, x, y):
 
             else:
                 nbClicError += 1
+=======
+    global color_target, vertic_picture, norm_picture, envCenter, env_haut_bas, thetaCible
+
+    t = time.time()
+
+    if(button == GLUT_LEFT_BUTTON and state == GLUT_DOWN):        
+        if(libExpe.isInTarget(thetaCible, angleRot, amplitudeInit, rayonCible, pdp)):
+            nbClicOnTarget += 1
+            if(nbClicOnTarget == 1):
+                t1 = time.time()
+                x, y = libExpe.posTarget(thetaCible, amplitudeInit)
+                color_target, thetaCible = draw.changeTargetsColor(nbCibles, targetOrder[nbClicOnTarget])
+                envCenter = [x, y, 0]
+
+                env_haut_bas = 1 - env_haut_bas
+                if env_haut_bas == 0:
+                    vertic_picture = vertic_picture_bas
+                    norm_picture = norm_picture_bas
+                else:
+                    vertic_picture = vertic_picture_haut
+                    norm_picture = norm_picture_haut
+
+            elif (nbClicOnTarget < 10):
+                x, y = libExpe.posTarget(thetaCible, amplitudeCible)
+                color_target, thetaCible = draw.changeTargetsColor(nbCibles, targetOrder[nbClicOnTarget])
+                envCenter = [x, y, 0]
+                
+                if nbClicOnTarget != 5:
+                    env_haut_bas = 1 - env_haut_bas
+                    if env_haut_bas == 0:
+                        vertic_picture = vertic_picture_bas
+                        norm_picture = norm_picture_bas
+                    else:
+                        vertic_picture = vertic_picture_haut
+                        norm_picture = norm_picture_haut
+                        
+            else:
+                duree = t - t1
+                # changer ID => repartir état initial avec nouvel ID
+                # nbClicError = 0 & nbClicOnTarget = 0
+                libExpe.saveData(name, amplitudeCible, rayonCible, hauteur, nbAnneaux, nbClicError, duree)
+                print("FIN !")
+
+            color_target = numpy.array(color_target, dtype='float32')
+        
+            #chargement des tableaux dans les buffers
+            glBindBuffer(GL_ARRAY_BUFFER, target_vbos[2])
+            glBufferData(GL_ARRAY_BUFFER, color_target, GL_DYNAMIC_DRAW)
+
+            glBindBuffer(GL_ARRAY_BUFFER, picture_vbos[0])
+            glBufferData(GL_ARRAY_BUFFER, libExpe.mooveObject(vertic_picture, envCenter), GL_DYNAMIC_DRAW)
+
+
+            glBindBuffer(GL_ARRAY_BUFFER, picture_vbos[1])
+            glBufferData(GL_ARRAY_BUFFER, norm_picture, GL_DYNAMIC_DRAW)
+
+        else:
+            nbClicError += 1
+>>>>>>> 4190de08ba90299b7fad440a75651e4e1613ce0a
     glutPostRedisplay()
 
 def keyboard(key, x, y):
@@ -511,10 +678,15 @@ def main():
 
     init_env()
     
+<<<<<<< HEAD
     lightVec = createModel()
     pi_shader, po_shader, ta_shader = init()
     #TODO passer les coordonnées de la lumière à picture shader et target shader
     initLight([pi_shader, ta_shader], lightVec)
+=======
+    createModel()
+    pi_shader, po_shader, ta_shader = init()
+>>>>>>> 4190de08ba90299b7fad440a75651e4e1613ce0a
     
     init_projections(po_shader)
     
@@ -529,7 +701,11 @@ def main():
 def display():
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
 
+<<<<<<< HEAD
     global tech_feedback, pdp, pdpClic
+=======
+    global tech_feedback, pdp
+>>>>>>> 4190de08ba90299b7fad440a75651e4e1613ce0a
 
     #faire la rotation deplacer le point de pivot (pdp)
     new_object_position()
@@ -543,6 +719,7 @@ def display():
         glDrawArrays(GL_TRIANGLES, 0, int(len(vertic_picture)/3))
 
     if expe:
+<<<<<<< HEAD
         glDisable(GL_DEPTH_TEST)
         glUseProgram(ta_shader)
         glDrawArrays(GL_TRIANGLES, 0, int(len(vertic_target)/3))
@@ -555,6 +732,18 @@ def display():
             if pdpE:
                 pdp = pdpbis
             pdpClic = pdpbis
+=======
+        glUseProgram(ta_shader)
+        glDrawArrays(GL_TRIANGLES, 0, int(len(vertic_target)/3))
+
+    #Intersection between the mouse ray and the scene
+    if pdpE:
+        if  mouse[0] >= 0 and mouse[0] <= window_w and \
+            mouse[1] >= 0 and mouse[1] <= window_h:
+            pdpbis = mouse_intersection(mouse[0], mouse[1], camera, window_w, window_h)
+            if pdpbis[0]  != "inf":
+                pdp = pdpbis
+>>>>>>> 4190de08ba90299b7fad440a75651e4e1613ce0a
 
     #display pointer at screen
     tech_feedback = cursor_feedback(mouse[:2])
