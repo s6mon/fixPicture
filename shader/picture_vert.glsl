@@ -5,9 +5,12 @@ uniform mat4 projection_mat;
 uniform mat4 modelview_mat;
 uniform mat4 object_mat;
 
+uniform vec3 light;
+
+
 out float color_factor;
 
-const vec3 light = vec3(0, -18, 40);
+const vec3 oldLight = vec3(0, -18, 40);
 
 vec3 l;
 in vec3 position;

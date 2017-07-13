@@ -7,5 +7,5 @@ in float color_factor;
 
 
 void main() {
-    fragColor = vec4(1,0,0,0.0) * color_factor;
+    fragColor = vec4(1,1,1,1.0) * color_factor;
 }

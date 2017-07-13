@@ -14,9 +14,9 @@ xList = []
 yList = []
 zList = []
 
-CONST_RISE_RING = 1 / 1000
-COLOR_CIRCLE = (0,1,0)
-COLOR_TARGET = (0,1,1)
+CONST_RISE_RING = 0
+COLOR_CIRCLE = (0,1,0, 1)
+COLOR_TARGET = (0,1,1, 1)
 
 NB_TRIANGLES_TARGETS = 30
 NB_TRIANGLES_STRIP_RINGS = 50
@@ -94,7 +94,7 @@ def drawEnv (amplitude, width, height, nbRings, H0):
 	rings = []
 	Id = fittsLaw_Id(amplitude, width)
 	step = amplitude / (nbRings+1)
-	nbRingsToDraw = (nbRings + 1) + 2
+	nbRingsToDraw = (nbRings + 1) + 0
 	
 	#determiner position en x (rayon) des différents cercles, en déduire largeur et hauteur
 	i = 0
@@ -106,7 +106,10 @@ def drawEnv (amplitude, width, height, nbRings, H0):
 		rings.append(Ring(amplitude = law_a(amplitude, nbRings, i)))
 		amplitudeCurrent = rings[i].amplitude
 		rings[i].width = fittsLaw_W(Id, amplitudeCurrent)
-		rings[i].height = law_H(amplitude, amplitudeCurrent, height) * alternance
+		if(H0 == 1):
+			rings[i].height = law_H(amplitude, amplitudeCurrent, height) * alternance
+		else:
+			rings[i].height = law_H_inv(amplitude, amplitudeCurrent, height) * alternance
 		alternance = 1 - alternance
 		i += 1
 
@@ -120,7 +123,7 @@ def drawEnv (amplitude, width, height, nbRings, H0):
 		ring (radius1, radius2, height, NB_TRIANGLES_STRIP_RINGS)
 		numCurrentRing = i + 1
 
-		#dessine les cones
+		#dessine les cônes
 		if (i < (nbRingsToDraw - 1)):
 			radius1 = rings[i].amplitude + (rings[i].width / 2)
 			radius2 = rings[i+1].amplitude - (rings[i+1].width / 2)
@@ -137,17 +140,20 @@ def drawCibles (amplitude, width, height, nbCibles, H0):
 	normales_tmp = []
 
 	deltaAngle = 2 * math.pi / nbCibles
+	if H0 == -1:
+		H0 = 0
 	i = 0
 	while i < nbCibles:
 		theta = i * deltaAngle 
 		x = math.cos(theta) * amplitude
 		y = math.sin(theta) * amplitude
 		if i > 2 and i < 7:
-			z = (height * 1 - H0) + CONST_RISE_RING 
+			z = (height * (1 - H0)) + CONST_RISE_RING 
 		else:
 			z = (height * H0) + CONST_RISE_RING
 		circle ([x, y, z], width, NB_TRIANGLES_TARGETS)
 		i += 1
+	circle ([0,0,0], 2, NB_TRIANGLES_TARGETS)
 
 	return vertices_tmp, normales_tmp
 
@@ -217,7 +223,14 @@ def changeTargetsColor (nbCibles, numCible):
 		else:
 			newColor.append(COLOR_CIRCLE)
 		i += 1
-	return newColor, theta
+	return newColor
+def initTargetsColor(nbCibles):
+	newColor = []
+	i = 0
+	while i < (nbCibles+1) * 3 * NB_TRIANGLES_TARGETS:
+		newColor.append(COLOR_CIRCLE)
+		i += 1
+	return newColor
 
 def fullList(objectList, maList, n):
 	global vertices_tmp, normales_tmp, xList, yList, zList
@@ -255,6 +268,9 @@ def fittsLaw_W (Id, A):
 #return height
 def law_H (A, a, H):
 	return a*H / A
+
+def law_H_inv(A, a, H):
+	return H -law_H(A,a,H)
 
 #return amplitude
 def law_a (A, nbRings, num):
