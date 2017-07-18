@@ -6,22 +6,46 @@ import datetime
 
 from . import drawExpe
 
-
+#IDX = [Amplitude, Width]
+ID3 = [14, 2]
+ID4 = [30, 2]
+ID5 = [31, 1]
 
 center0 = [0, 0, 0]
 nbTargets = 9
 
 def isInTarget(thetaCible, thetaRotation, distance, rayonCible, pdp):
 	"""True ou False selon si x y est dans la cible"""
+def isAtCenter(rayonCible, mouse):
+	""""""
 def radius_InitToTarget (radius):
 	"""calcule le rayon entre c1 et c5
 	Fonction uniquement valable pour ISO"""
+def radius_TargetToInit (radius):
+	""""""
+def newRadius(radius):
+	""""""
+def thetaBis():
+	""""""
 def posTarget (theta, radius):
 	""""""
 def mooveObject (tab, trans):
 	""""""
 def saveData(name, amplitude, largeur, hauteur, nbAnneaux, nbErreurClic, temps):
 	""""""
+
+
+
+class ExpeCases:
+	def __init__(self):
+		self.tech = [0,1,2]
+		self.id = [3, 4, 5]
+		self.idCompo = [ID3, ID4, ID5]
+		self.height = [10, 15, 20]
+		self.symmetry = [-1, 1]
+
+
+
 def isInTarget(thetaCible, thetaRotation, distance, rayonCible, mouse):
 
 	newD = math.cos(thetaRotation) * distance
@@ -51,8 +75,6 @@ def isAtCenter(rayonCible, mouse):
 	else:
 		return False
 
-#!!! fonction valable dans un contexte ISO (pour 9 cibles)
-#prend le rayon à l'état initial et renvoie le rayon entre deux cibles
 def radius_InitToTarget (radius):
 	theta = 8*math.pi / 9
 	A = (abs(math.cos(theta)) * radius) + radius
@@ -119,7 +141,84 @@ def saveData(name, amplitude, largeur, hauteur, nbAnneaux, nbErreurClic, temps):
 	print("Result files saved")
 
 
+def buildArrayExpe(tech):
 
+	tab = []
+	expeCases = ExpeCases()
+	i = len(expeCases.id) * len(expeCases.height) * len(expeCases.symmetry)
+	t = 0
+	idN = 0
+	h = 0
+	s = 0
+	
+	while i > 0:
+		while idN < len(expeCases.id):
+			h = 0
+			while h < len(expeCases.height):
+				s = 0
+				while s < len(expeCases.symmetry):
+					tab.append([expeCases.tech[t], expeCases.id[idN], expeCases.idCompo[idN][0], expeCases.idCompo[idN][1], expeCases.height[h], expeCases.symmetry[s]])
+					i -= 1
+					s += 1
+				h += 1
+			idN += 1
+
+	return tab
+
+def saveArrayExpe(tab, tech):
+	pathTab = "../ressources/expe/"+tech
+
+	try:
+		numpy.save(pathTab, tab)
+	except ValueError:
+		print()
+		print()
+		print(ValueError)
+		print()
+		overall.stopApplication()
+	print("Files saved")
+
+def loadArrayExpe(tech):
+	pathTab = "../ressources/expe/"+tech+".npy"
+
+	try:
+		tab = numpy.load(pathTab)
+	except ValueError:
+		print()
+		print()
+		print(ValueError)
+		print()
+		overall.stopApplication()
+	except:
+		print("Files doesn't loaded")
+		return False, None
+	print("Files loaded")
+	return True, tab
+
+def getTab(tech):
+	cond, tab = loadArrayExpe(tech)
+	if not(cond):
+		if tech == "T1":
+			tab = buildArrayExpe(0)
+			saveArrayExpe(tab, tech)
+
+		elif tech == "T2":
+			tab = buildArrayExpe(1)
+			saveArrayExpe(tab, tech)
+
+		elif tech == "T3":
+			tab = buildArrayExpe(2)
+			saveArrayExpe(tab, tech)
+		else:
+			print("Lib (expe.getTab): Argument tehc is wrong")
+			overall.stopApplication()
+	return tab
+
+
+
+
+
+		
 
 
 

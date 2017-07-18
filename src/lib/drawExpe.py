@@ -142,8 +142,6 @@ def drawEnv (amplitude, width, height, nbRings, H0):
 		i += 1
 
 	#Anneaux central pour que le pdp fonctionne
-	print(rings[0].amplitude)
-	print(rings[0].width/2)
 	ring (0, rings[0].amplitude - rings[0].width/2, rings[0].height, NB_TRIANGLES_STRIP_RINGS)
 
 	return vertices_tmp, normales_tmp, maxAxis()

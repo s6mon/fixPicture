@@ -24,7 +24,9 @@ import lib.teston as teston
 test = False
 expe = False
 pdpE = False
-start = False #if the experience is starting => True, else False 
+start = False #if the experience is starting => True, else False
+initDone = False
+
 
 targetOrder = [0, 4, 8, 3, 7, 2, 6, 1, 5, 0]
 
@@ -44,7 +46,8 @@ vertic_target = []
 norm_target = []
 color_target = []
 
-
+numExpe = 0
+expeArray = []
 
 nameFile = None
 name = None
@@ -64,10 +67,11 @@ hauteur = 0
 nbAnneaux = 0
 symetrieCible = 0 #-1 for lleft targets high OR 1 for right targets high
 
-
 nbClicError = 0
 nbClicOnTarget = 0
 t1 = 0
+
+lightVec = []
 
 #==============================ADJUSTABLE VARIABLES==============================#
     #CAMERA
@@ -143,30 +147,15 @@ def createModel():
     global vertic_picture, norm_picture, vertic_picture_up, norm_picture_up, vertic_picture_down, norm_picture_down
     global vertic_target, norm_target, color_target
 
-    global thetaCible, rayonCible, nbCibles, env_haut_bas, amplitudeCible, hauteur, nbAnneaux, symetrieCible
+    global thetaCible, env_haut_bas, envCenter
 
 
     if test:
         #parse file in
-        vertic_picture, norm_picture = parser.parse(nameFile, reverse) #le 2eme param sert à inverser les sommets
+        vertic_picture, norm_picture = parser.parse(nameFile, reverse) #the 2ns parameter used to inverse vertices
         cameraZ = 10
+
     elif expe:
-        #create model
-        amplitudeCible = 30
-        rayonCible = 1
-        nbCibles = 9
-        env_haut_bas = 1
-        hauteur = 30
-        nbAnneaux = 13 #MUST BE ODD
-        symetrieCible = 1
-
-        #decide the level of ring at choosen amplitude
-        if symetrieCible == -1:
-            env_haut_bas = 1
-        elif symetrieCible == 1:
-            env_haut_bas = 0
-
-
         vertic_target, norm_target = draw.drawCibles(amplitudeCible, rayonCible, hauteur, nbCibles, symetrieCible)
         color_target = draw.initTargetsColor(nbCibles)
 
@@ -186,7 +175,7 @@ def createModel():
 
         x, y = libExpe.posTarget(0, amplitudeCible)
         envCenter = [x, y, 0]
-        if env_haut_bas == 1: #decide the sense of the slope
+        if env_haut_bas == 1: #decide the direction of the slope
             vertic_picture = vertic_picture_up
             norm_picture = norm_picture_up
         else:
@@ -196,16 +185,49 @@ def createModel():
 
         vertic_picture = libExpe.mooveObject(vertic_picture, envCenter)
         thetaCible = libExpe.thetaTarget(targetOrder[0])
+        envCenter = [0,0,0]
     camera.position[2] = 100
 
     return [0,cameraZ,cameraZ*2]
+
+def setParam(nameUser, tech):
+    global expe, pdpE, name, expeArray, numExpe
+
+    numExpe = 0 #TODO à mettre comme param
+    expe = True
+    if tech == 1:
+        pdpE = False
+    elif tech == 2 or tech == 3:
+        pdpE = True
+        
+    name = nameUser
+
+    strTech = "T"+str(tech+1)
+    expeArray = libExpe.getTab(strTech)
+
+
+def changeVar(expeNum):
+    global rayonCible, nbCibles, amplitudeCible, hauteur, nbAnneaux, symetrieCible
+
+    currentExpe = expeArray[expeNum]
+    amplitudeCible = currentExpe[2]
+    rayonCible = currentExpe[3]
+    nbCibles = 9
+    hauteur = currentExpe[4]
+    nbAnneaux = 13 #MUST BE ODD
+    symetrieCible = 1 #Normally = currentExpe[5] But experience will be too long
+
+    #decide the level of ring at choosen amplitude
+    if symetrieCible == -1:
+        env_haut_bas = 1
+    elif symetrieCible == 1:
+        env_haut_bas = 0
 
 
 def initLight(shaderArray, lightVec):
     for shader in shaderArray:
         glUseProgram(shader)
         unif_light = glGetUniformLocation(shader, 'light')
-        print(lightVec)
         glUniform3fv(unif_light, 1, lightVec)
 
 
@@ -396,8 +418,7 @@ def mouse_button(button, state, x, y):
     if(button == GLUT_LEFT_BUTTON and state == GLUT_DOWN):
         if (not start):
             if(libExpe.isAtCenter(2, pdpClic)):
-                #TODO commencer exp
-                    #init var : nbClicError = 0, nbClicOnTarget = 0, t1 = time.time(), start = True
+                t1 = t
                 start = True
                 color_target = draw.changeTargetsColor (nbCibles, targetOrder[nbClicOnTarget])
                 color_target = numpy.array(color_target, dtype='float32')
@@ -429,24 +450,28 @@ def mouse_button(button, state, x, y):
                         env_haut_bas = 1 - env_haut_bas
                             
                 else:
+                    nbClicError = 0
+                    nbClicOnTarget = 0
                     duree = t - t1
-                    # changer ID => repartir état initial avec nouvel ID
                     start = False
+                    #TODO save data doit se faire après chaque pointage !!!
                     libExpe.saveData(name, amplitudeCible, (rayonCible*2), hauteur, nbAnneaux, nbClicError, duree)
-                    print("FIN !")
+                    runExperience()
 
-                color_target = numpy.array(color_target, dtype='float32')
-            
-                #loading of array in buffers
-                glBindBuffer(GL_ARRAY_BUFFER, target_vbos[2])
-                glBufferData(GL_ARRAY_BUFFER, color_target, GL_DYNAMIC_DRAW)
+                if start:
+                    color_target = numpy.array(color_target, dtype='float32')
+                
+                    #loading of array in buffers
+                    glBindBuffer(GL_ARRAY_BUFFER, target_vbos[2])
+                    glBufferData(GL_ARRAY_BUFFER, color_target, GL_DYNAMIC_DRAW)
 
-                glBindBuffer(GL_ARRAY_BUFFER, picture_vbos[0])
-                glBufferData(GL_ARRAY_BUFFER, libExpe.mooveObject(vertic_picture, envCenter), GL_DYNAMIC_DRAW)
+                    glBindBuffer(GL_ARRAY_BUFFER, picture_vbos[0])
+                    print("nbClicError =", nbClicOnTarget, "envCenter :", envCenter)
+                    glBufferData(GL_ARRAY_BUFFER, libExpe.mooveObject(vertic_picture, envCenter), GL_DYNAMIC_DRAW)
 
 
-                glBindBuffer(GL_ARRAY_BUFFER, picture_vbos[1])
-                glBufferData(GL_ARRAY_BUFFER, norm_picture, GL_DYNAMIC_DRAW)
+                    glBindBuffer(GL_ARRAY_BUFFER, picture_vbos[1])
+                    glBufferData(GL_ARRAY_BUFFER, norm_picture, GL_DYNAMIC_DRAW)
 
             else:
                 nbClicError += 1
@@ -478,10 +503,39 @@ def cursor_feedback(p_mouse):
 def idle():
     glutPostRedisplay()
 
+def runExperience():
+    global numExpe, lightVec
+
+    if numExpe == (len(expeArray) - 1):
+        print("FIN de la technique", expeArray[0][0])
+        overall.stopApplication()
+    changeVar(numExpe)
+    lightVec = createModel()
+    numExpe += 1
+
+    if initDone:
+        glBindBuffer(GL_ARRAY_BUFFER, picture_vbos[0])
+        glBufferData(GL_ARRAY_BUFFER, vertic_picture, GL_DYNAMIC_DRAW)
+
+        glBindBuffer(GL_ARRAY_BUFFER, picture_vbos[1])
+        glBufferData(GL_ARRAY_BUFFER, norm_picture, GL_DYNAMIC_DRAW)
+
+        glBindBuffer(GL_ARRAY_BUFFER, target_vbos[0])
+        glBufferData(GL_ARRAY_BUFFER, vertic_target, GL_DYNAMIC_DRAW)
+
+        glBindBuffer(GL_ARRAY_BUFFER, target_vbos[1])
+        glBufferData(GL_ARRAY_BUFFER, norm_target, GL_DYNAMIC_DRAW)
+
+        glBindBuffer(GL_ARRAY_BUFFER, target_vbos[2])
+        glBufferData(GL_ARRAY_BUFFER, color_target, GL_DYNAMIC_DRAW)
+
+
+    glutPostRedisplay()
+
 def main():
     print('====> START')
     global pi_shader, po_shader, ta_shader
-    global nameFile, reverse, test, expe, pdpE, name
+    global nameFile, reverse, test, initDone
     
     glutInit(sys.argv)
     #===================GET BACK PARAM===================#
@@ -502,10 +556,9 @@ def main():
         if len(sys.argv) < 4:
             print("Nombre d'argument incorrect")
             overall.stopApplication()
-        expe = True
-        pdpE = bool(int(sys.argv[2]))
-        name = sys.argv[3]
+        setParam(sys.argv[2], int(sys.argv[3]))
         print("Début expérimentation ...")
+        runExperience()
 
     if not test and not expe:
         print("Les arguments passé sont incorrects")
@@ -514,11 +567,12 @@ def main():
 
     init_env()
     
-    lightVec = createModel()
     pi_shader, po_shader, ta_shader = init()
     initLight([pi_shader, ta_shader], lightVec)
     
     init_projections(po_shader)
+
+    initDone = True
     
     glutDisplayFunc(display)
     glutPassiveMotionFunc(mouse_passive)

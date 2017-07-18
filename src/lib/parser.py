@@ -180,8 +180,9 @@ def loadFile(fileName, reverse):
 		print()
 		print(ValueError)
 		print()
+		overall.stopApplication()
 	except:
-		print("Files don't loaded")
+		print("Files doesn't loaded")
 		return False
 	print("Files loaded")
 	return True
