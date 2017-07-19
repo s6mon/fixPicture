@@ -99,7 +99,7 @@ def drawEnv (amplitude, width, height, nbRings, H0):
 	Id = fittsLaw_Id(amplitude, width)
 	step = amplitude / (nbRings+1)
 
-	nbRingsToDraw = (nbRings + 1) + 3
+	nbRingsToDraw = (nbRings + 1) + 5
 	
 	#lorsque H0 est à 1 on monte, on descend sinon
 	i = 0

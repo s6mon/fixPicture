@@ -3,8 +3,10 @@ import sys
 import math
 import numpy
 import datetime
+import random
 
 from . import drawExpe
+from . import overall
 
 #IDX = [Amplitude, Width]
 ID3 = [14, 2]
@@ -29,9 +31,19 @@ def thetaBis():
 	""""""
 def posTarget (theta, radius):
 	""""""
+def thetaTarget(numTarget):
+	""""""
 def mooveObject (tab, trans):
 	""""""
 def saveData(name, amplitude, largeur, hauteur, nbAnneaux, nbErreurClic, temps):
+	""""""
+def buildArrayExpe(tech):
+	""""""
+def saveArrayExpe(tab, tech):
+	""""""
+def loadArrayExpe(tech):
+	""""""
+def getTabExpe(tech):
 	""""""
 
 
@@ -42,7 +54,7 @@ class ExpeCases:
 		self.id = [3, 4, 5]
 		self.idCompo = [ID3, ID4, ID5]
 		self.height = [10, 15, 20]
-		self.symmetry = [-1, 1]
+		self.symmetry = [1] #add -1 to make expe with 2 symmetry
 
 
 
@@ -110,12 +122,12 @@ def mooveObject (tab, trans):
 	tabReturn = numpy.array(tabReturn, dtype='float32')
 	return tabReturn
 
-def saveData(name, amplitude, largeur, hauteur, nbAnneaux, nbErreurClic, temps):
+def saveData(name, tech, amplitude, largeur, hauteur, symetrie, nbErreurClic, temps):
 	filePath = "../resultats/"+name+".expe"
 	id = drawExpe.fittsLaw_Id(amplitude, largeur)
 	now = datetime.datetime.now()
 	date = now.strftime("%Y-%m-%d %H:%M:%S")
-	lineToWrite = date+"\t"+str(round(id, 3))+"\t"+str(amplitude)+"\t\t"+str(largeur)+"\t\t"+str(hauteur)+"\t\t"+str(nbAnneaux)+"\t\t"+str(nbErreurClic)+"\t\t"+str(round(temps, 3))+"\n"
+	lineToWrite = date+"\t\t"+name+"\t\t"+str(tech)+"\t\t"+str(round(id, 3))+"\t\t"+str(amplitude)+"\t\t\t"+str(largeur)+"\t\t\t"+str(hauteur)+"\t\t\t"+str(symetrie)+"\t\t\t"+str(nbErreurClic)+"\t\t\t\t"+str(round(temps, 3))+"\n"
 	try:
 		dataFile = open(filePath, "r")
 	except ValueError:
@@ -124,7 +136,7 @@ def saveData(name, amplitude, largeur, hauteur, nbAnneaux, nbErreurClic, temps):
 		print(ValueError)
 		print()
 	except:
-		firstLine = ("Date :\t\t\tId:\tAmplitude\tLargeur:\tHauteur:\tNbAnneaux:\tNbErreurClic:\tTemps:\n")
+		firstLine = ("Date :\t\t\t\t\tName:\t\tTech\tID:\t\tAmplitude\tLargeur:\tHauteur:\tSymétrie:\tNbErreurClic:\tTemps:\n")
 		dataFile = open(filePath, "a")
 		dataFile.write(firstLine)
 	dataFile.close()
@@ -138,18 +150,23 @@ def saveData(name, amplitude, largeur, hauteur, nbAnneaux, nbErreurClic, temps):
 		print()
 		overall.stopApplication()
 	dataFile.close
-	print("Result files saved")
+	#print("Result files saved")
 
 
-def buildArrayExpe(tech):
+def buildArrayTestExpe(tech):
+	return [[tech, 3, 14, 2, 10, 1], [tech, 3, 14, 2, 20, 1], [tech, 5, 31, 1, 10, 1], [tech, 5, 31, 1, 20, 1]]
+
+def buildArrayExpe(tech, nbRepet):
 
 	tab = []
 	expeCases = ExpeCases()
 	i = len(expeCases.id) * len(expeCases.height) * len(expeCases.symmetry)
-	t = 0
+	t = tech
 	idN = 0
 	h = 0
 	s = 0
+	repetition = 0
+	nbRepetition = nbRepet
 	
 	while i > 0:
 		while idN < len(expeCases.id):
@@ -157,8 +174,11 @@ def buildArrayExpe(tech):
 			while h < len(expeCases.height):
 				s = 0
 				while s < len(expeCases.symmetry):
-					tab.append([expeCases.tech[t], expeCases.id[idN], expeCases.idCompo[idN][0], expeCases.idCompo[idN][1], expeCases.height[h], expeCases.symmetry[s]])
-					i -= 1
+					repetition = 0
+					while repetition < nbRepetition:
+						tab.append([expeCases.tech[t], expeCases.id[idN], expeCases.idCompo[idN][0], expeCases.idCompo[idN][1], expeCases.height[h], expeCases.symmetry[s]])
+						i -= 1
+						repetition += 1
 					s += 1
 				h += 1
 			idN += 1
@@ -195,23 +215,31 @@ def loadArrayExpe(tech):
 	print("Files loaded")
 	return True, tab
 
-def getTab(tech):
+def getTabExpe(tech, nbRepet, test):
 	cond, tab = loadArrayExpe(tech)
 	if not(cond):
-		if tech == "T1":
-			tab = buildArrayExpe(0)
-			saveArrayExpe(tab, tech)
+		if tech == "T1" or tech == "T1_test":
+			if test:
+				tab = buildArrayTestExpe(0)
+			else:
+				tab = buildArrayExpe(0, nbRepet)
 
-		elif tech == "T2":
-			tab = buildArrayExpe(1)
-			saveArrayExpe(tab, tech)
+		elif tech == "T2" or tech == "T2_test":
+			if test:
+				tab = buildArrayTestExpe(1)
+			else:
+				tab = buildArrayExpe(1, nbRepet)
 
-		elif tech == "T3":
-			tab = buildArrayExpe(2)
-			saveArrayExpe(tab, tech)
+		elif tech == "T3" or tech == "T3_test":
+			if test:
+				tab = buildArrayTestExpe(2)
+			else:
+				tab = buildArrayExpe(2, nbRepet)
 		else:
 			print("Lib (expe.getTab): Argument tehc is wrong")
 			overall.stopApplication()
+		random.shuffle(tab)
+		saveArrayExpe(tab, tech)
 	return tab
 
 
