@@ -16,7 +16,7 @@ ID5 = [31, 1]
 center0 = [0, 0, 0]
 nbTargets = 9
 
-def isInTarget(thetaCible, thetaRotation, distance, rayonCible, pdp):
+def isInTarget(thetaCible, heightCible, thetaRotation, distance, rayonCible, pdp, tech):
 	"""True ou False selon si x y est dans la cible"""
 def isAtCenter(rayonCible, mouse):
 	""""""
@@ -45,6 +45,8 @@ def loadArrayExpe(tech):
 	""""""
 def getTabExpe(tech):
 	""""""
+def pythagore(a, b):
+	""""""
 
 
 
@@ -58,24 +60,36 @@ class ExpeCases:
 
 
 
-def isInTarget(thetaCible, thetaRotation, distance, rayonCible, mouse):
+def isInTarget(thetaCible, heightCible, thetaRotation, distance, rayonCible, mouse, tech):
 
-	newD = math.cos(thetaRotation) * distance
-	xCenter = math.cos(thetaCible) * newD
-	yCenter = math.sin(thetaCible) * newD
 	xClic = mouse[0]
 	yClic = mouse[1]
+	zClic = mouse[2]
 
-	# print("Mouse :", xClic, yClic)
-	# print("Target (x):", xCenter-(rayonCible), xCenter+(rayonCible))
-	# print("Target (y):", yCenter-(rayonCible), yCenter+(rayonCible))
+	xInit = math.cos(thetaCible) * distance
+	yInit = math.sin(thetaCible) * distance
 
-	if xClic >= xCenter - (rayonCible) and xClic <= xCenter + (rayonCible) and \
-	   yClic >= yCenter - (rayonCible) and yClic <= yCenter + (rayonCible):
+	if tech == 0:
+		xTar = math.cos(thetaRotation) * xInit
+		zTar = math.sin(thetaRotation) * xInit + heightCible
+	else:
+		xTar = xInit
+		zTar = heightCible
+
+	
+	# print("height, thetaRotation, distance :", heightCible, thetaRotation, distance)
+	# print("Mouse :", mouse)
+	# print("xTar, yTar :", xInit, yInit)
+	# print("xRot, zRot :", xTar, zTar)
+	# print("Diff :", zTar-mouse[2])
+	# print()
+
+	if xClic >= xTar - rayonCible and xClic <= xTar + rayonCible and \
+	   yClic >= yInit - rayonCible and yClic <= yInit + rayonCible and \
+	   zClic >= zTar - 0.5 and zClic <= zTar + 0.5:
 	   	return True
 	else:
 		return False
-
 
 def isAtCenter(rayonCible, mouse):
 
@@ -123,11 +137,11 @@ def mooveObject (tab, trans):
 	return tabReturn
 
 def saveData(name, tech, amplitude, largeur, hauteur, symetrie, nbErreurClic, temps):
-	filePath = "../resultats/"+name+".expe"
-	id = drawExpe.fittsLaw_Id(amplitude, largeur)
+	filePath = "../resultats/"+name+".expe.txt"
+	ID = drawExpe.fittsLaw_Id(amplitude, largeur)
 	now = datetime.datetime.now()
 	date = now.strftime("%Y-%m-%d %H:%M:%S")
-	lineToWrite = date+"\t\t"+name+"\t\t"+str(tech)+"\t\t"+str(round(id, 3))+"\t\t"+str(amplitude)+"\t\t\t"+str(largeur)+"\t\t\t"+str(hauteur)+"\t\t\t"+str(symetrie)+"\t\t\t"+str(nbErreurClic)+"\t\t\t\t"+str(round(temps, 3))+"\n"
+	lineToWrite = date+"\t"+name+"\t"+str(tech)+"\t"+numberComa(ID)+"\t"+numberComa(amplitude)+"\t"+numberComa(largeur)+"\t"+numberComa(hauteur)+"\t"+numberComa(symetrie)+"\t"+numberComa(nbErreurClic)+"\t"+numberComa(temps)+"\n"
 	try:
 		dataFile = open(filePath, "r")
 	except ValueError:
@@ -136,19 +150,18 @@ def saveData(name, tech, amplitude, largeur, hauteur, symetrie, nbErreurClic, te
 		print(ValueError)
 		print()
 	except:
-		firstLine = ("Date :\t\t\t\t\tName:\t\tTech\tID:\t\tAmplitude\tLargeur:\tHauteur:\tSymétrie:\tNbErreurClic:\tTemps:\n")
+		#firstLine = ("Date :\t\t\t\t\tName:\t\tTech\tID:\t\tAmplitude\tLargeur:\tHauteur:\tSymétrie:\tNbErreurClic:\tTemps:\n")
 		dataFile = open(filePath, "a")
-		dataFile.write(firstLine)
 	dataFile.close()
 	try:
 		dataFile = open(filePath, "a")
-		dataFile.write(lineToWrite)
 	except ValueError:
 		print()
 		print()
 		print(ValueError)
 		print()
 		overall.stopApplication()
+	dataFile.write(lineToWrite)
 	dataFile.close
 	#print("Result files saved")
 
@@ -182,7 +195,6 @@ def buildArrayExpe(tech, nbRepet):
 					s += 1
 				h += 1
 			idN += 1
-
 	return tab
 
 def saveArrayExpe(tab, tech):
@@ -243,11 +255,27 @@ def getTabExpe(tech, nbRepet, test):
 	return tab
 
 
-
-
-
+def pythagore(a, b):
+	return math.sqrt(math.pow(a, 2) + math.pow(b, 2))
 		
-
+def numberComa(floatPoint):
+	chaine = str(floatPoint)
+	floatComa = []
+	ff = "bonjour"
+	i = 0
+	j = 0
+	while i < len(chaine):
+		if j > 3:
+			i = len(chaine)
+		else:
+			if chaine[i] == ".":
+				floatComa.append(",")
+				j = 0
+			else:
+				floatComa.append(chaine[i])
+			i += 1
+			j += 1
+	return "".join(floatComa)
 
 
 

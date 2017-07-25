@@ -81,27 +81,26 @@ def parse(fileName, reverse):
 		        				i += 2
 
 		        				s = int(match.group(i)) - 1
-		        				fullVertArray(verticesXTab[s], verticesYTab[s], verticesZTab[s], vertic_picture)
+		        				fullVertArray(verticesXTab[s], verticesYTab[s], verticesZTab[s], vertic_picture, 1)
 		        				n = int(match.group(i+1)) - 1
-		        				fullVertArray(normaleTab[n][0], normaleTab[n][1], normaleTab[n][2], norm_picture)
+		        				fullVertArray(normaleTab[n][0], normaleTab[n][1], normaleTab[n][2], norm_picture, 1)
 
 		        				s = match.group(i+2)
 		        				nbVert += 1
 		        		s0 = int(match.group(8)) - 1 #on relie le dernier sommet de la forme
-		        		fullVertArray(verticesXTab[s0], verticesYTab[s0], verticesZTab[s0], vertic_picture)
+		        		fullVertArray(verticesXTab[s0], verticesYTab[s0], verticesZTab[s0], vertic_picture, 1)
 		        		n0 = int(match.group(9)) - 1
-		        		fullVertArray(normaleTab[n0][0], normaleTab[n0][1], normaleTab[n0][2], norm_picture)
+		        		fullVertArray(normaleTab[n0][0], normaleTab[n0][1], normaleTab[n0][2], norm_picture, 1)
 		        	else : #il y a 3 sommets
 		        		i = 17
 		        		while i <= 21:
 		        			s = int(match.group(i)) - 1
 
-		        			fullVertArray(verticesXTab[s], verticesYTab[s], verticesZTab[s], vertic_picture)
+		        			fullVertArray(verticesXTab[s], verticesYTab[s], verticesZTab[s], vertic_picture, 1)
 		        			n = int(match.group(i+1)) - 1
-		        			fullVertArray(normaleTab[n][0], normaleTab[n][1], normaleTab[n][2], norm_picture)
+		        			fullVertArray(normaleTab[n][0], normaleTab[n][1], normaleTab[n][2], norm_picture, 1)
 
 		        			i += 2
-
 
 		if reverse == 1:
 			print("Reverse vertices")
@@ -109,6 +108,7 @@ def parse(fileName, reverse):
 
 		vertic_picture = numpy.array(vertic_picture, dtype='float32')
 		norm_picture = numpy.array(norm_picture, dtype='float32')
+		print(vertic_picture)
 		reCentre()
 		saveFile(fileName, reverse)
 		
@@ -117,16 +117,17 @@ def parse(fileName, reverse):
 
 	return vertic_picture, norm_picture
 
-def fullVertArray(sn1, sn2, sn3, arrayName):
+def fullVertArray(sn1, sn2, sn3, arrayName, store):
 	global vertic_picture, norm_picture
 	global xList, yList, zList
 	if(arrayName == vertic_picture):
 		arrayName.append(sn1)
 		arrayName.append(sn2)
 		arrayName.append(sn3)
-		xList.append(sn1)
-		yList.append(sn2)
-		zList.append(sn3)
+		if store:
+			xList.append(sn1)
+			yList.append(sn2)
+			zList.append(sn3)
 	elif(arrayName == norm_picture):
 		arrayName.append([sn1, sn2, sn3])
 
@@ -134,6 +135,8 @@ def reCentre():
 	global  vertic_picture
 
 	arraySize = int(len(vertic_picture))
+
+	#print("++++++++++++++++++++", type(max(xList)))
 
 	xTrans = (float(max(xList)) + float(min(xList))) / 2
 	yTrans = (float(max(yList)) + float(min(yList))) / 2
@@ -145,14 +148,11 @@ def reCentre():
 		scale = xTrans
 	i = 0
 	while i < arraySize:
-		vertic_picture[i] = vertic_picture[i] - xTrans #/ xTrans*2 #TODO changer la div pour tout voir ou jouer sur "m_persp_modelview[2][3] = -5" pour changer l'éloignement de la camera 
-		#vertic_picture[i] = vertic_picture[i] / scale
+		vertic_picture[i] = vertic_picture[i] - xTrans
 
-		vertic_picture[i+1] = vertic_picture[i+1] - yTrans #/ yTrans*2
-		#vertic_picture[i+1] = vertic_picture[i+1] / scale
+		vertic_picture[i+1] = vertic_picture[i+1] - yTrans
 
-		vertic_picture[i+2] = vertic_picture[i+2] - zTrans #/ zTrans*2
-		#vertic_picture[i+2] = vertic_picture[i+2] / scale
+		vertic_picture[i+2] = vertic_picture[i+2] - zTrans
 		i += 3
 
 
@@ -201,6 +201,42 @@ def saveFile(fileName, reverse):
 		print()
 		overall.stopApplication()
 	print("Files saved")
+
+
+def background(camera):
+
+	z = float(min(zList))
+	n = 0.0001
+
+	s1_6 = [-camera, -camera, -z] 
+	s2   = [camera,  -camera, -z]
+	s3_4 = [camera,  camera,  -z]
+	s5   = [-camera, camera,  -z]
+
+	fullVertArray(s1_6[0], s1_6[1], s1_6[2], vertic_picture, 0)
+	fullVertArray(n, n, n, norm_picture, 0)
+	fullVertArray(s2[0], s2[1], s2[2], vertic_picture, 0)
+	fullVertArray(n, n, n, norm_picture, 0)
+	fullVertArray(s3_4[0], s3_4[1], s3_4[2], vertic_picture, 0)
+	fullVertArray(n, n, n, norm_picture, 0)
+
+
+	fullVertArray(s3_4[0], s3_4[1], s3_4[2], vertic_picture, 0)
+	fullVertArray(n, n, n, norm_picture, 0)
+	fullVertArray(s5[0], s5[1], s5[2], vertic_picture, 0)
+	fullVertArray(n, n, n, norm_picture, 0)
+	fullVertArray(s1_6[0], s1_6[1], s1_6[2], vertic_picture, 0)
+	fullVertArray(n, n, n, norm_picture, 0)
+
+
+
+
+
+
+
+
+
+
 
 
 

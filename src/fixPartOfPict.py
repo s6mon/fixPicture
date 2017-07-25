@@ -58,15 +58,16 @@ tech_feedback = numpy.array([]) #
 
 angleRot = 0.0
 thetaCible = 0.0
+heightCible = 0.0
 
 amplitudeCible = 0 #radius between 2 targets consecutive in ISO order
 rayonCible = 0
 nbCibles = 0
 envCenter = [0,0,0]
-env_haut_bas = 0
-hauteur = 0
+env_haut_bas = 0 #indicate if the ring R must be low(=0) or high(=height)
+hauteur = 0 #height of rings and targets high 
 nbAnneaux = 0
-symetrieCible = 0 #-1 for lleft targets high OR 1 for right targets high
+symetrieCible = 0 #-1 for left targets high OR 1 for right targets high
 
 nbClicError = 0
 nbClicOnTarget = 0
@@ -85,11 +86,11 @@ speed = 7 # 1 => speed = pi/1000
 pdp = [0., 0., 0.] # point around which one pivots at initial OR fix according to the technique
 pdpClic = [0., 0., 0.]
 sens = 1 #sense of rotation initial
-initPosCamera = [0, 0, 4] #initial position of camera
+initPosCamera = [0, 0, 0] #initial position of camera
     #WINDOW
 window_w , window_h = 900, 900
     #ORDER OF VERTICES (use only for .odb format)
-reverse = -1
+reverse = 1
 #================================================================================#
 
 
@@ -158,18 +159,17 @@ def createModel():
     global vertic_picture, norm_picture, vertic_picture_up, norm_picture_up, vertic_picture_down, norm_picture_down
     global vertic_target, norm_target, color_target
 
-    global thetaCible, env_haut_bas, envCenter
+    global thetaCible, env_haut_bas, envCenter, heightCible
 
 
     if test:
         #parse file in
-        print("ICI")
-        vertic_picture, norm_picture = parser.parse(nameFile, reverse) #the 2ns parameter used to inverse vertices
+        vertic_picture, norm_picture = parser.parse(nameFile, reverse) #the 2nd parameter is used to inverse vertices
         cameraZ = 10
-        print(vertic_picture)
+        camera.position[2] = 10 #set the remoteness camera
 
-        vertic_picture = numpy.array(vertic_picture_down, dtype='float32')
-        norm_picture = numpy.array(norm_picture_down, dtype='float32')
+        vertic_picture = numpy.array(vertic_picture, dtype='float32')
+        norm_picture = numpy.array(norm_picture, dtype='float32')
 
     elif expe:
         vertic_target, norm_target = draw.drawCibles(amplitudeCible, rayonCible, hauteur, nbCibles, symetrieCible)
@@ -194,14 +194,15 @@ def createModel():
         if env_haut_bas == 1: #decide the direction of the slope
             vertic_picture = vertic_picture_up
             norm_picture = norm_picture_up
-        else:
+        elif env_haut_bas == 0:
             vertic_picture = vertic_picture_down
             norm_picture = norm_picture_down
         env_haut_bas = 1 - env_haut_bas #inversion of environment for the next target
 
         vertic_picture = libExpe.mooveObject(vertic_picture, envCenter) #translate environment to be center at the 1st target
-        thetaCible = libExpe.thetaTarget(targetOrder[0]) #set the thetaCible on the 1st target 
-    camera.position[2] = 100 #set the remoteness camera
+        thetaCible = libExpe.thetaTarget(targetOrder[0]) #set the thetaCible of the 1st target
+        heightCible = hauteur * env_haut_bas #set the height of the 1st target
+        camera.position[2] = 100 #set the remoteness camera
 
     return [0,cameraZ,cameraZ*2] #to set light position
 
@@ -269,7 +270,7 @@ def init_env():
     
     glutInitDisplayString('double rgba samples=8 depth core')
     glutInitWindowSize(window_w, window_h)
-    glutInitWindowPosition (1110, 0)
+    glutInitWindowPosition (1000, 0)
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH)
     glutCreateWindow('myFirstWindow')
     glClearColor(1.0, 1.0, 1.0, 1.0)
@@ -291,7 +292,7 @@ def init_env():
 def init():
     global picture_vbos, pointing_vbos, target_vbos
 
-    pointer_sh_attr = [5]
+    pointer_sh_attr = [3]
 
     #creation of shaders
     try:
@@ -306,7 +307,7 @@ def init():
         sys.exit()
     
     picture_vbos = glGenBuffers(2)
-    pointing_vbos = [glGenBuffers(1)]
+    pointing_vbos = glGenBuffers(1)
     target_vbos = glGenBuffers(3)
     
     ###picture shader###
@@ -331,7 +332,7 @@ def init():
     
     ###pointer shader###
     tech_model = numpy.array([])
-    glBindBuffer(GL_ARRAY_BUFFER, pointing_vbos[0])
+    glBindBuffer(GL_ARRAY_BUFFER, pointing_vbos)
     glBufferData(GL_ARRAY_BUFFER, tech_model.astype('float32'), GL_DYNAMIC_DRAW)
     glVertexAttribPointer(pointer_sh_attr[0], 3, GL_FLOAT, GL_FALSE, 0, None)
     glEnableVertexAttribArray(pointer_sh_attr[0])
@@ -406,33 +407,29 @@ def new_object_position():
 
 def init_projections(po_shader):
     
-    camera.ortho_projection = vp.orthographic(0, window_w, 0, window_h, -1.0, 1.0)
+    camera.ortho_projection = vp.orthographic(0, window_w, 0, window_h, 0.1, 1000)
     camera.ortho_modelview = numpy.identity(4)
     
     camera.persp_projection  = vp.perspective(camera.fov, camera.ratio, camera.near, camera.far).T
-    camera.persp_modelview = numpy.array(matrix.m_lookAt(camera.position,
-                                                        camera.looking,
-                                                        camera.up))
-    new_object_position()
+    camera.persp_modelview = numpy.array(matrix.m_lookAt(camera.position, camera.looking, camera.up))
     
     glUseProgram(po_shader)
-    projection(po_shader, camera.ortho_projection.T, camera.ortho_modelview, None)
+    projection(po_shader, camera.ortho_projection, camera.ortho_modelview, None)
 
 
 def mouse_intersection(mouse_x, mouse_y, camera, win_w, win_h):
 
-    z = glReadPixels( mouse_x, mouse_y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT)[0][0];
-    if z > 0.999:
+    
+    winZ = glReadPixels(mouse_x, mouse_y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT)
+    if winZ > 0.999:
         return [str("inf"), str("inf"), str("inf")]
     
-    viewport    = [0, 0, win_w, win_h];
-    
-    i = inv(numpy.matmul(camera.persp_projection.T, camera.persp_modelview.reshape((4,4)).T))
-    
-    winZ = glReadPixels( mouse_x, mouse_y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT);
-    
-    vector = numpy.array([2*(mouse_x - viewport[0])/viewport[2] - 1, 2*(mouse_y - viewport[1])/viewport[3] - 1, 2*winZ-1, 1])
+    viewport    = [0, 0, win_w, win_h] 
+    i = inv(numpy.matmul(camera.persp_projection.T, camera.persp_modelview.reshape(4,4).T))
+  
+    vector = numpy.array([2*(mouse_x - viewport[0])/viewport[2] - 1, 2*(mouse_y - viewport[1])/viewport[3] - 1, (2 * winZ) - 1, 1])
     p = numpy.matmul(i,vector)
+
     return p[0:3]/p[3]
 
 def mouse_passive(x, y):
@@ -444,10 +441,12 @@ def mouse_passive(x, y):
 
 def mouse_button(button, state, x, y):
     t = time.time()
+    pdpT = pdpClic
+    angleRotT = angleRot
 
     if(button == GLUT_LEFT_BUTTON and state == GLUT_DOWN):
         if expe:
-            controlClicks(t)
+            controlClicks(t, angleRotT, pdpT)
 
 def keyboard(key, x, y):
 
@@ -461,8 +460,12 @@ def cursor_feedback(p_mouse):
     up      = numpy.array([0,1])
     r_mouse = 5
     arr = []
-    
-    nb_steps = 20
+    new_mouse = [0.0, 0.0]
+
+    new_mouse[0] = (int(p_mouse[0]) - window_w/2) * camera.position[2] / window_w
+    new_mouse[1] = (int(p_mouse[1]) - window_h/2) * camera.position[2] / window_h
+
+    nb_steps = 4
     step = 2*math.pi/nb_steps
     for i in range(nb_steps):
         arr.append(p_mouse)
@@ -510,9 +513,10 @@ def runExperience():
 
     glutPostRedisplay()
 
-def controlClicks(t):
+#this function is call when expe is True
+def controlClicks(t, angleRotT, pdpT):
     global nbClicError, nbClicOnTarget, t1
-    global color_target, vertic_picture, norm_picture, envCenter, env_haut_bas, thetaCible, start
+    global color_target, vertic_picture, norm_picture, envCenter, env_haut_bas, thetaCible, start, heightCible
     
     if (not start):
         if(libExpe.isAtCenter(2, pdpClic)):
@@ -525,11 +529,12 @@ def controlClicks(t):
             glBufferData(GL_ARRAY_BUFFER, color_target, GL_DYNAMIC_DRAW)
 
     else:
-        if(libExpe.isInTarget(thetaCible, angleRot, amplitudeCible, rayonCible, pdpClic)):
+        if(libExpe.isInTarget(thetaCible, heightCible, angleRotT, amplitudeCible, rayonCible, pdpT, techUsed)):
             nbClicOnTarget += 1
 
             if nbClicOnTarget == 1:
                 thetaCible = libExpe.thetaTarget(targetOrder[nbClicOnTarget])
+                heightCible = hauteur * (1-env_haut_bas)
                 color_target = draw.changeTargetsColor(nbCibles, targetOrder[nbClicOnTarget])
                 envCenter = [0,0,0]
             
@@ -552,7 +557,9 @@ def controlClicks(t):
                     else:
                         vertic_picture = vertic_picture_up
                         norm_picture = norm_picture_up
+                    heightCible = hauteur * env_haut_bas
                     env_haut_bas = 1 - env_haut_bas
+                
                         
             else:
                 if not techAdapt:
@@ -573,7 +580,6 @@ def controlClicks(t):
 
                 glBindBuffer(GL_ARRAY_BUFFER, picture_vbos[0])
                 glBufferData(GL_ARRAY_BUFFER, libExpe.mooveObject(vertic_picture, envCenter), GL_DYNAMIC_DRAW)
-
 
                 glBindBuffer(GL_ARRAY_BUFFER, picture_vbos[1])
                 glBufferData(GL_ARRAY_BUFFER, norm_picture, GL_DYNAMIC_DRAW)
@@ -637,6 +643,7 @@ def display():
     global tech_feedback, pdp, pdpClic
 
     new_object_position()
+
     
     #display object at screen
     glUseProgram(pi_shader)
@@ -661,13 +668,17 @@ def display():
             pdpClic = pdpbis
 
 
-    #display pointer at screen
-    tech_feedback = cursor_feedback(mouse[:2])
+    # if test:
+    #     #display pointer at screen
+    #     tech_feedback = cursor_feedback(mouse[:2])
+    #     print(tech_feedback)
 
-    glUseProgram(po_shader)
-    glBindBuffer(GL_ARRAY_BUFFER, pointing_vbos[0])
-    glBufferData(GL_ARRAY_BUFFER, tech_feedback.astype('float32'), GL_DYNAMIC_DRAW)
-    glDrawArrays(GL_TRIANGLES, 0, len(tech_feedback))
+    #     glDisable(GL_DEPTH_TEST)
+    #     glUseProgram(po_shader)
+    #     glBindBuffer(GL_ARRAY_BUFFER, pointing_vbos)
+    #     glBufferData(GL_ARRAY_BUFFER, tech_feedback.astype('float32'), GL_DYNAMIC_DRAW)
+    #     glDrawArrays(GL_TRIANGLES, 0, len(tech_feedback))
+    #     glEnable(GL_DEPTH_TEST)
 
     glutSwapBuffers()
 

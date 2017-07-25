@@ -20,7 +20,7 @@ COLOR_CIRCLE = (0, 0, 0, 0)
 COLOR_TARGET = (0.3, 0, 0.5, 1)
 COLOR_PAUSE  = (0, 1, 0, 1)
 
-NB_TRIANGLES_TARGETS = 30
+NB_TRIANGLES_TARGETS = 20
 NB_TRIANGLES_STRIP_RINGS = 50
 
 N_FLAT = [0.0, 0.0, 1.0]
@@ -229,7 +229,7 @@ def changeTargetsColor (nbCibles, numCible):
 	newColor = []
 	i = 0
 	theta = numCible * 2*math.pi / nbCibles
-	while i < nbCibles * 3 * NB_TRIANGLES_TARGETS:
+	while i < (nbCibles+1) * 3 * NB_TRIANGLES_TARGETS:
 		if (i >= numCible * NB_TRIANGLES_TARGETS * 3) and (i < (numCible+1) * NB_TRIANGLES_TARGETS * 3):
 			newColor.append(COLOR_TARGET)
 		else:
