@@ -82,7 +82,7 @@ lightVec = [] #position of light
 axisRot = [0, 1, 0] #Define axis of rotation
 angle0 = 0 #center of arc of a circle rotation OR -1 to turn continu
 arcAngle = math.pi/20 #value arc of a circle
-speed = 7 # 1 => speed = pi/1000
+speed = 4 # 1 => speed = pi/1000
 pdp = [0., 0., 0.] # point around which one pivots at initial OR fix according to the technique
 pdpClic = [0., 0., 0.]
 sens = 1 #sense of rotation initial
@@ -166,7 +166,7 @@ def createModel():
         #parse file in
         vertic_picture, norm_picture = parser.parse(nameFile, reverse) #the 2nd parameter is used to inverse vertices
         cameraZ = 10
-        camera.position[2] = 10 #set the remoteness camera
+        camera.position[2] = 5 #set the remoteness camera
 
         vertic_picture = numpy.array(vertic_picture, dtype='float32')
         norm_picture = numpy.array(norm_picture, dtype='float32')

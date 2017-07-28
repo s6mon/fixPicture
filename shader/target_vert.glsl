@@ -9,8 +9,6 @@ uniform vec3 light;
 out float color_factor;
 out vec4 t;
 
-const vec3 oldLight = vec3(0, 0, 15);
-
 vec3 l;
 
 in vec3 position;

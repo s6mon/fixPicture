@@ -20,7 +20,7 @@ COLOR_CIRCLE = (0, 0, 0, 0)
 COLOR_TARGET = (0.3, 0, 0.5, 1)
 COLOR_PAUSE  = (0, 1, 0, 1)
 
-NB_TRIANGLES_TARGETS = 20
+NB_TRIANGLES_TARGETS = 4
 NB_TRIANGLES_STRIP_RINGS = 50
 
 N_FLAT = [0.0, 0.0, 1.0]
@@ -142,7 +142,7 @@ def drawEnv (amplitude, width, height, nbRings, H0):
 		i += 1
 
 	#Anneaux central pour que le pdp fonctionne
-	ring (0, rings[0].amplitude - rings[0].width/2, rings[0].height, NB_TRIANGLES_STRIP_RINGS)
+	ring (0, rings[0].amplitude - rings[0].width/2, height*(1-H0), NB_TRIANGLES_STRIP_RINGS)
 
 	return vertices_tmp, normales_tmp, maxAxis()
 
@@ -183,7 +183,6 @@ def ring (radius1, radius2, height, nbSegments):
 		fullList(vertice2, vertices_tmp, 3) #l'ordre est important !
 		fullList(vertice1, vertices_tmp, 3)
 
-		#n = normaleCompute(vertice1, vertice2, vertice3)
 		fullList((N_FLAT, N_FLAT), normales_tmp, 2)
 		
 		i += 1

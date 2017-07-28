@@ -76,14 +76,6 @@ def isInTarget(thetaCible, heightCible, thetaRotation, distance, rayonCible, mou
 		xTar = xInit
 		zTar = heightCible
 
-	
-	# print("height, thetaRotation, distance :", heightCible, thetaRotation, distance)
-	# print("Mouse :", mouse)
-	# print("xTar, yTar :", xInit, yInit)
-	# print("xRot, zRot :", xTar, zTar)
-	# print("Diff :", zTar-mouse[2])
-	# print()
-
 	if xClic >= xTar - rayonCible and xClic <= xTar + rayonCible and \
 	   yClic >= yInit - rayonCible and yClic <= yInit + rayonCible and \
 	   zClic >= zTar - 0.5 and zClic <= zTar + 0.5:
@@ -168,6 +160,7 @@ def saveData(name, tech, amplitude, largeur, hauteur, symetrie, nbErreurClic, te
 
 def buildArrayTestExpe(tech):
 	return [[tech, 3, 14, 2, 10, 1], [tech, 3, 14, 2, 20, 1], [tech, 5, 31, 1, 10, 1], [tech, 5, 31, 1, 20, 1]]
+	#return [[tech, 3, 20, 2, 10, 1]]
 
 def buildArrayExpe(tech, nbRepet):
 
