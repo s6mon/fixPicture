@@ -160,7 +160,6 @@ def saveData(name, tech, amplitude, largeur, hauteur, symetrie, nbErreurClic, te
 
 def buildArrayTestExpe(tech):
 	return [[tech, 3, 14, 2, 10, 1], [tech, 3, 14, 2, 20, 1], [tech, 5, 31, 1, 10, 1], [tech, 5, 31, 1, 20, 1]]
-	#return [[tech, 3, 20, 2, 10, 1]]
 
 def buildArrayExpe(tech, nbRepet):
 

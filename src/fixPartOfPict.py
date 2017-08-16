@@ -479,7 +479,8 @@ def idle():
     glutPostRedisplay()
 
 def showCurrentExpe():
-    print("Tech :", expeArray[numExpe][0], "| ID :", expeArray[numExpe][1], "| Height :", expeArray[numExpe][4], "| No", numExpe+1,"/", len(expeArray))
+    #print("Tech :", expeArray[numExpe][0], "| ID :", expeArray[numExpe][1], "| Height :", expeArray[numExpe][4], "| No", numExpe+1,"/", len(expeArray))
+    print("No", numExpe+1,"/", len(expeArray))
 
 def runExperience():
     global numExpe, lightVec
